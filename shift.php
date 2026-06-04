@@ -17,47 +17,20 @@ $sales = $shift ? shift_sales($conn, (int)$shift['id']) : null;
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-        body {
-            background: #f5f7fb;
-            color: #212529;
-            font-family: Arial, sans-serif;
+        body { background:#f5f7fb; }
+        .card, .navbar {
+            background:#fff;
+            border:1px solid #dee2e6;
+            border-radius:14px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.04);
         }
-
-        .navbar,
-        .card {
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 14px;
-            color: #212529;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-
         .inner-card {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 12px;
+            background:#f8f9fa;
+            border:1px solid #dee2e6;
+            border-radius:12px;
         }
-
-        .form-control {
-            background: #ffffff;
-            color: #212529;
-            border-color: #ced4da;
-        }
-
-        .form-control:focus {
-            background: #ffffff;
-            color: #212529;
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.15);
-        }
-
-        .muted {
-            color: #6c757d;
-        }
-
-        a {
-            text-decoration: none;
-        }
+        .muted { color:#6c757d; }
+        a { text-decoration:none; }
     </style>
 </head>
 

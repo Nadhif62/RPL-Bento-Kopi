@@ -20,7 +20,7 @@ $payload = [
     'order_type' => $_POST['order_type'] ?? 'dine_in',
     'customer_name' => trim($_POST['customer_name'] ?? ''),
     'metode_pembayaran' => $_POST['metode_pembayaran'] ?? 'tunai',
-    'nominal_diterima' => $_POST['nominal_diterima'] ?? null,
+    'nominal_diterima' => $_POST['nominal_diterima'] ?? 0,
     'status' => $_POST['status'] ?? 'paid',
     'items' => $_POST['items'] ?? []
 ];
@@ -28,10 +28,16 @@ $payload = [
 try {
     $result = save_order($conn, $payload);
 
-    $_SESSION['flash_success'] =
-        'Order #' . $result['order_id'] .
-        ' berhasil. Total: ' . rupiah($result['total']) .
-        '. Kembalian: ' . rupiah($result['kembalian']);
+    if (!empty($result['is_append_open_bill'])) {
+        $_SESSION['flash_success'] =
+            'Pesanan tambahan berhasil masuk ke Open Bill #' . $result['order_id'] .
+            '. Tambahan total: ' . rupiah($result['total']) . '.';
+    } else {
+        $_SESSION['flash_success'] =
+            'Order #' . $result['order_id'] .
+            ' berhasil. Total: ' . rupiah($result['total']) .
+            '. Kembalian: ' . rupiah($result['kembalian']);
+    }
 
     if (!empty($result['alerts'])) {
         $_SESSION['critical_alerts'] = $result['alerts'];

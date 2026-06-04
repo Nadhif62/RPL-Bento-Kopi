@@ -11,7 +11,10 @@ if (active_shift($conn, $userId)) {
     exit;
 }
 
-$stmt = $conn->prepare('INSERT INTO shifts (user_id, petty_cash, status, mulai_shift) VALUES (?, ?, "active", NOW())');
+$stmt = $conn->prepare(
+    'INSERT INTO shifts (user_id, petty_cash, status, mulai_shift) 
+     VALUES (?, ?, "active", NOW())'
+);
 $stmt->bind_param('id', $userId, $pettyCash);
 $stmt->execute();
 $stmt->close();

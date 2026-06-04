@@ -5,7 +5,11 @@ require_login(['kasir']);
 $userId = (int)$_SESSION['user']['id'];
 $shift = active_shift($conn, $userId);
 
-$menus = $conn->query('SELECT * FROM menu ORDER BY FIELD(kategori,"beverage","makanan","snack"), nama_menu ASC');
+$menus = $conn->query(
+    'SELECT * FROM menu 
+     ORDER BY FIELD(kategori,"beverage","makanan","snack"), nama_menu ASC'
+);
+
 $ingredients = $conn->query('SELECT * FROM ingredients ORDER BY nama_bahan ASC');
 
 $today = date('Y-m-d');
@@ -32,7 +36,11 @@ $salesToday = (float)$summary['gross_sales'] - (float)$summary['refunded_sales']
 $tables = range(1, 12);
 $openTables = [];
 
-$result = $conn->query("SELECT DISTINCT nomor_meja FROM orders WHERE status = 'open' AND order_type = 'dine_in'");
+$result = $conn->query(
+    "SELECT DISTINCT nomor_meja 
+     FROM orders 
+     WHERE status = 'open' AND order_type = 'dine_in'"
+);
 
 while ($row = $result->fetch_assoc()) {
     $openTables[] = $row['nomor_meja'];
@@ -55,48 +63,13 @@ while ($row = $result->fetch_assoc()) {
             font-family: Arial, sans-serif;
         }
 
-        .navbar,
         .card,
+        .navbar,
         .table-box {
             background: #ffffff;
             border: 1px solid #dee2e6;
             border-radius: 14px;
-            color: #212529;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-
-        .form-control,
-        .form-select {
-            background: #ffffff;
-            color: #212529;
-            border-color: #ced4da;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            background: #ffffff;
-            color: #212529;
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.15);
-        }
-
-        .table {
-            --bs-table-bg: #ffffff;
-            --bs-table-color: #212529;
-            --bs-table-border-color: #dee2e6;
-        }
-
-        .table thead th {
-            background: #f1f3f5;
-            color: #495057;
-        }
-
-        .muted {
-            color: #6c757d;
-        }
-
-        .stat {
-            min-height: 86px;
         }
 
         .table-box {
@@ -112,13 +85,15 @@ while ($row = $result->fetch_assoc()) {
         .empty {
             background: #d1e7dd;
             color: #0f5132;
-            border-color: #badbcc;
         }
 
         .filled {
             background: #f8d7da;
             color: #842029;
-            border-color: #f5c2c7;
+        }
+
+        .selected-table {
+            outline: 3px solid #0d6efd;
         }
 
         .menu-item {
@@ -126,8 +101,11 @@ while ($row = $result->fetch_assoc()) {
             border: 1px solid #dee2e6;
             border-radius: 14px;
             padding: 14px;
-            color: #212529;
             box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .table thead th {
+            background: #f1f3f5;
         }
 
         a {
@@ -138,7 +116,7 @@ while ($row = $result->fetch_assoc()) {
 
 <body>
 <nav class="navbar m-3 p-3">
-    <strong>☕ Bento Kopi POS</strong>
+    <strong>Bento Kopi POS</strong>
 
     <div>
         <span class="me-3">Kasir: <?= htmlspecialchars($_SESSION['user']['nama_lengkap']) ?></span>
@@ -180,7 +158,7 @@ while ($row = $result->fetch_assoc()) {
             <div class="col-md-5">
                 <div class="card p-4">
                     <h4>Start Shift</h4>
-                    <p class="muted">Kasir wajib membuka shift sebelum membuat transaksi.</p>
+                    <p class="text-muted">Kasir wajib membuka shift sebelum membuat transaksi.</p>
 
                     <form action="start_shift.php" method="post">
                         <div class="mb-3">
@@ -202,29 +180,29 @@ while ($row = $result->fetch_assoc()) {
 
         <div class="row g-3 mb-3">
             <div class="col-md-3">
-                <div class="card stat p-3">
-                    <span class="muted">Transaksi Hari Ini</span>
+                <div class="card p-3">
+                    <span class="text-muted">Transaksi Hari Ini</span>
                     <h3><?= (int)$summary['transaksi'] ?></h3>
                 </div>
             </div>
 
             <div class="col-md-3">
-                <div class="card stat p-3">
-                    <span class="muted">Pending Bayar</span>
+                <div class="card p-3">
+                    <span class="text-muted">Pending Bayar</span>
                     <h3 class="text-warning"><?= (int)$summary['pending'] ?></h3>
                 </div>
             </div>
 
             <div class="col-md-3">
-                <div class="card stat p-3">
-                    <span class="muted">Sales Hari Ini</span>
+                <div class="card p-3">
+                    <span class="text-muted">Sales Hari Ini</span>
                     <h3 class="text-success"><?= rupiah($salesToday) ?></h3>
                 </div>
             </div>
 
             <div class="col-md-3">
-                <div class="card stat p-3">
-                    <span class="muted">Petty Cash</span>
+                <div class="card p-3">
+                    <span class="text-muted">Petty Cash</span>
                     <h3><?= rupiah($shift['petty_cash']) ?></h3>
                 </div>
             </div>
@@ -261,24 +239,61 @@ while ($row = $result->fetch_assoc()) {
 
                     <div class="d-flex flex-wrap gap-2 mt-2">
                         <?php foreach ($tables as $table): ?>
-                            <?php $isOpen = in_array('Meja ' . $table, $openTables, true); ?>
+                            <?php
+                            $tableName = 'Meja ' . $table;
+                            $isOpen = in_array($tableName, $openTables, true);
+                            ?>
 
                             <div class="table-box <?= $isOpen ? 'filled' : 'empty' ?>"
-                                 onclick="document.getElementById('nomor_meja').value='Meja <?= $table ?>'">
+                                 data-table="<?= htmlspecialchars($tableName) ?>"
+                                 onclick="selectTable('<?= htmlspecialchars($tableName) ?>', this)">
                                 Meja <?= $table ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
 
+                <div class="card p-3 mb-3 d-none" id="openBillCard">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h5 class="mb-0">Open Bill Aktif</h5>
+                            <small class="text-muted" id="openBillInfo"></small>
+                        </div>
+
+                        <span class="badge bg-warning text-dark">Belum Dibayar</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-2">
+                            <thead>
+                            <tr>
+                                <th>Menu</th>
+                                <th>Jumlah</th>
+                                <th>Subtotal</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="openBillDetails"></tbody>
+                        </table>
+                    </div>
+
+                    <h5 class="text-end mb-0">
+                        Total Bill: <span id="openBillTotal">Rp 0</span>
+                    </h5>
+
+                    <small class="text-muted">
+                        Input jumlah menu di bawah hanya untuk pesanan tambahan.
+                    </small>
+                </div>
+
                 <div class="card p-3">
-                    <h5>Input Order</h5>
+                    <h5>Input Order / Tambah Pesanan</h5>
 
                     <form action="process_order.php" method="post" id="orderForm">
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label">Tipe Order</label>
-                                <select name="order_type" class="form-select">
+                                <select name="order_type" id="order_type" class="form-select">
                                     <option value="dine_in">Dine In</option>
                                     <option value="takeaway">Takeaway</option>
                                 </select>
@@ -297,6 +312,7 @@ while ($row = $result->fetch_assoc()) {
                                 <label class="form-label">Nama Customer</label>
                                 <input type="text"
                                        name="customer_name"
+                                       id="customer_name"
                                        class="form-control"
                                        placeholder="Opsional">
                             </div>
@@ -312,6 +328,8 @@ while ($row = $result->fetch_assoc()) {
                                         <input type="number"
                                                name="items[<?= $menu['id'] ?>]"
                                                data-menu-id="<?= $menu['id'] ?>"
+                                               data-menu-name="<?= htmlspecialchars($menu['nama_menu']) ?>"
+                                               data-menu-price="<?= $menu['harga'] ?>"
                                                class="form-control item-qty mt-2"
                                                min="0"
                                                value="0">
@@ -343,7 +361,7 @@ while ($row = $result->fetch_assoc()) {
 
                             <div class="col-md-4">
                                 <label class="form-label">Status</label>
-                                <select name="status" class="form-select">
+                                <select name="status" id="status" class="form-select">
                                     <option value="paid">Lunas</option>
                                     <option value="open">Pending / Open Bill</option>
                                 </select>
@@ -365,7 +383,7 @@ while ($row = $result->fetch_assoc()) {
                 <div class="card p-3 mb-3">
                     <h5>Stok Bahan Baku</h5>
 
-                    <table class="table table-sm">
+                    <table class="table table-sm align-middle">
                         <thead>
                         <tr>
                             <th>Bahan</th>
@@ -378,11 +396,22 @@ while ($row = $result->fetch_assoc()) {
                         <?php while ($ing = $ingredients->fetch_assoc()): ?>
                             <tr>
                                 <td><?= htmlspecialchars($ing['nama_bahan']) ?></td>
-                                <td><?= $ing['stok_gudang'] ?></td>
+
                                 <td>
-                                    <?= ((float)$ing['stok_gudang'] <= (float)$ing['batas_kritis'])
-                                        ? '<span class="badge bg-danger">Kritis</span>'
-                                        : '<span class="badge bg-success">Aman</span>' ?>
+                                    <strong><?= format_stok($ing['stok_gudang'], $ing['satuan']) ?></strong><br>
+                                    <small class="text-muted">
+                                        Batas: <?= format_stok($ing['batas_kritis'], $ing['satuan']) ?>
+                                    </small>
+                                </td>
+
+                                <td>
+                                    <?php if ((float)$ing['stok_gudang'] <= 0): ?>
+                                        <span class="badge bg-dark">Habis</span>
+                                    <?php elseif ((float)$ing['stok_gudang'] <= (float)$ing['batas_kritis']): ?>
+                                        <span class="badge bg-danger">Kritis</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-success">Aman</span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -415,16 +444,210 @@ while ($row = $result->fetch_assoc()) {
 <script src="offline_handler.js"></script>
 
 <script>
-document.getElementById('metode_pembayaran')?.addEventListener('change', function () {
-    const input = document.getElementById('nominal_diterima');
+const MODE_KEY_LOCAL = 'bento_offline_mode_v4';
+const OPEN_BILL_CACHE_KEY_LOCAL = 'bento_open_bills_cache_v1';
 
-    if (this.value === 'qris') {
+function isOfflineModeLocal() {
+    return localStorage.getItem(MODE_KEY_LOCAL) === '1';
+}
+
+function getOpenBillCacheLocal() {
+    return JSON.parse(localStorage.getItem(OPEN_BILL_CACHE_KEY_LOCAL) || '[]');
+}
+
+function formatRupiah(value) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0
+    }).format(value);
+}
+
+function resetAdditionInputs() {
+    document.querySelectorAll('.item-qty').forEach(input => {
         input.value = 0;
-        input.setAttribute('readonly', 'readonly');
+    });
+}
+
+function hasSelectedMenu() {
+    let selected = false;
+
+    document.querySelectorAll('.item-qty').forEach(input => {
+        const qty = parseInt(input.value, 10);
+
+        if (qty > 0) {
+            selected = true;
+        }
+    });
+
+    return selected;
+}
+
+function setPaymentReadonly() {
+    const metode = document.getElementById('metode_pembayaran');
+    const nominal = document.getElementById('nominal_diterima');
+
+    if (!metode || !nominal) return;
+
+    if (metode.value === 'qris') {
+        nominal.value = 0;
+        nominal.setAttribute('readonly', 'readonly');
     } else {
-        input.removeAttribute('readonly');
+        nominal.removeAttribute('readonly');
+    }
+}
+
+function renderNoOpenBill() {
+    const openBillCard = document.getElementById('openBillCard');
+    const openBillInfo = document.getElementById('openBillInfo');
+    const openBillDetails = document.getElementById('openBillDetails');
+    const openBillTotal = document.getElementById('openBillTotal');
+
+    openBillCard.classList.add('d-none');
+    openBillDetails.innerHTML = '';
+    openBillTotal.textContent = 'Rp 0';
+    openBillInfo.textContent = '';
+
+    document.getElementById('status').value = 'paid';
+    document.getElementById('metode_pembayaran').value = 'tunai';
+    document.getElementById('customer_name').value = '';
+    document.getElementById('nominal_diterima').value = 0;
+
+    setPaymentReadonly();
+}
+
+function renderOpenBill(data, sourceLabel = 'Online') {
+    const order = data.order;
+
+    document.getElementById('status').value = order.status;
+    document.getElementById('metode_pembayaran').value = order.metode_pembayaran;
+    document.getElementById('customer_name').value = order.customer_name || '';
+    document.getElementById('nominal_diterima').value = 0;
+
+    setPaymentReadonly();
+
+    const openBillCard = document.getElementById('openBillCard');
+    const openBillInfo = document.getElementById('openBillInfo');
+    const openBillDetails = document.getElementById('openBillDetails');
+    const openBillTotal = document.getElementById('openBillTotal');
+
+    openBillDetails.innerHTML = '';
+
+    openBillInfo.textContent =
+        sourceLabel +
+        ' · Order #' + order.id +
+        ' · ' + order.nomor_meja +
+        ' · Metode: ' + order.metode_pembayaran.toUpperCase();
+
+    data.details.forEach(item => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td>${item.nama_menu}</td>
+            <td>x${item.jumlah}</td>
+            <td>${formatRupiah(item.subtotal)}</td>
+        `;
+
+        openBillDetails.appendChild(tr);
+    });
+
+    openBillTotal.textContent = formatRupiah(order.total_bayar);
+    openBillCard.classList.remove('d-none');
+}
+
+async function loadOpenBillForTable(tableName, forceOffline = false) {
+    const openBillCard = document.getElementById('openBillCard');
+    const openBillInfo = document.getElementById('openBillInfo');
+    const openBillDetails = document.getElementById('openBillDetails');
+    const openBillTotal = document.getElementById('openBillTotal');
+
+    openBillCard.classList.add('d-none');
+    openBillDetails.innerHTML = '';
+    openBillTotal.textContent = 'Rp 0';
+    openBillInfo.textContent = '';
+
+    if (isOfflineModeLocal() || forceOffline) {
+        const cache = getOpenBillCacheLocal();
+
+        const cachedBill = cache.find(item => {
+            return item.order.nomor_meja === tableName &&
+                item.order.status === 'open';
+        });
+
+        if (!cachedBill) {
+            renderNoOpenBill();
+            return;
+        }
+
+        renderOpenBill(cachedBill, 'Offline Cache');
+        return;
+    }
+
+    try {
+        const response = await fetch('get_open_bill.php?nomor_meja=' + encodeURIComponent(tableName));
+        const data = await response.json();
+
+        if (!data.success) {
+            alert(data.message || 'Gagal mengambil open bill.');
+            return;
+        }
+
+        if (!data.has_open_bill) {
+            renderNoOpenBill();
+            return;
+        }
+
+        renderOpenBill({
+            order: data.order,
+            details: data.details
+        }, 'Online');
+    } catch (error) {
+        alert('Gagal membaca open bill. Pastikan server aktif.');
+    }
+}
+
+async function selectTable(tableName, element) {
+    document.querySelectorAll('.table-box').forEach(box => {
+        box.classList.remove('selected-table');
+    });
+
+    if (element) {
+        element.classList.add('selected-table');
+    }
+
+    document.getElementById('nomor_meja').value = tableName;
+    document.getElementById('order_type').value = 'dine_in';
+
+    resetAdditionInputs();
+
+    await loadOpenBillForTable(tableName);
+}
+
+window.loadOpenBillForTable = loadOpenBillForTable;
+
+document.getElementById('metode_pembayaran')?.addEventListener('change', setPaymentReadonly);
+
+document.getElementById('orderForm')?.addEventListener('submit', function (event) {
+    if (event.defaultPrevented) {
+        return;
+    }
+
+    const nomorMeja = document.getElementById('nomor_meja').value.trim();
+
+    if (nomorMeja === '') {
+        event.preventDefault();
+        alert('Meja atau nama pelanggan wajib diisi.');
+        return;
+    }
+
+    if (!hasSelectedMenu()) {
+        event.preventDefault();
+        alert('Belum ada menu yang dipesan. Isi jumlah minimal 1 pada salah satu menu.');
+        return;
     }
 });
+
+setPaymentReadonly();
 </script>
 </body>
 </html>

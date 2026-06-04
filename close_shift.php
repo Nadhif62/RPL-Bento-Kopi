@@ -11,7 +11,11 @@ if (!$shift) {
     exit;
 }
 
-$stmt = $conn->prepare('UPDATE shifts SET status = "closed", selesai_shift = NOW() WHERE id = ? AND user_id = ?');
+$stmt = $conn->prepare(
+    'UPDATE shifts 
+     SET status = "closed", selesai_shift = NOW() 
+     WHERE id = ? AND user_id = ?'
+);
 $stmt->bind_param('ii', $shift['id'], $userId);
 $stmt->execute();
 $stmt->close();

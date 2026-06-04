@@ -15,13 +15,14 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     nama_lengkap VARCHAR(100) NOT NULL,
-    role ENUM('kasir','admin','finance') NOT NULL,
+    role ENUM('kasir','manager','finance') NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 CREATE TABLE ingredients (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nama_bahan VARCHAR(100) NOT NULL,
+    satuan ENUM('gram','ml','pcs') NOT NULL DEFAULT 'gram',
     stok_gudang DECIMAL(10,2) NOT NULL DEFAULT 0,
     batas_kritis DECIMAL(10,2) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB;
@@ -96,18 +97,18 @@ CREATE TABLE refunds (
 -- Password semua akun demo: 123456
 INSERT INTO users (username, password, nama_lengkap, role) VALUES
 ('kasir', '$2y$12$JgasxekMB12tAOWq7AFFCegq/9Hpif3auI5ZpMm4Xo9V7bbSDEEOa', 'Kasir Demo', 'kasir'),
-('admin', '$2y$12$JgasxekMB12tAOWq7AFFCegq/9Hpif3auI5ZpMm4Xo9V7bbSDEEOa', 'Admin Outlet', 'admin'),
+('manager', '$2y$12$JgasxekMB12tAOWq7AFFCegq/9Hpif3auI5ZpMm4Xo9V7bbSDEEOa', 'Manager Outlet', 'manager'),
 ('finance', '$2y$12$JgasxekMB12tAOWq7AFFCegq/9Hpif3auI5ZpMm4Xo9V7bbSDEEOa', 'Finance Pusat', 'finance');
 
-INSERT INTO ingredients (nama_bahan, stok_gudang, batas_kritis) VALUES
-('Beras', 10000, 1000),
-('Ayam', 5000, 500),
-('Kopi', 2000, 300),
-('Susu', 3000, 400),
-('Gula', 2500, 300),
-('Kentang', 4000, 500),
-('Tepung', 3000, 400),
-('Coklat', 1500, 250);
+INSERT INTO ingredients (nama_bahan, satuan, stok_gudang, batas_kritis) VALUES
+('Beras', 'gram', 10000, 1000),
+('Ayam', 'gram', 5000, 500),
+('Kopi', 'gram', 2000, 300),
+('Susu', 'ml', 3000, 400),
+('Gula', 'gram', 2500, 300),
+('Kentang', 'gram', 4000, 500),
+('Tepung', 'gram', 3000, 400),
+('Coklat', 'gram', 1500, 250);
 
 INSERT INTO menu (nama_menu, kategori, harga) VALUES
 ('Es Kopi Susu', 'beverage', 22000),

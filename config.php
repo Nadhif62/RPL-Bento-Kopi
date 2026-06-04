@@ -36,9 +36,14 @@ function rupiah($angka): string
 
 function active_shift(mysqli $conn, int $userId): ?array
 {
-    $stmt = $conn->prepare('SELECT * FROM shifts WHERE user_id = ? AND status = "active" ORDER BY id DESC LIMIT 1');
+    $stmt = $conn->prepare(
+        'SELECT * FROM shifts 
+         WHERE user_id = ? AND status = "active" 
+         ORDER BY id DESC LIMIT 1'
+    );
     $stmt->bind_param('i', $userId);
     $stmt->execute();
+
     $shift = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
@@ -57,11 +62,51 @@ function shift_sales(mysqli $conn, int $shiftId): array
          FROM orders
          WHERE shift_id = ?'
     );
+
     $stmt->bind_param('i', $shiftId);
     $stmt->execute();
+
     $row = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
     $row['net_sales'] = (float)$row['gross_sales'] - (float)$row['refunded_sales'];
+
     return $row;
+}
+function angka_bersih($angka): string
+{
+    $angka = (float)$angka;
+
+    if (floor($angka) == $angka) {
+        return number_format($angka, 0, ',', '.');
+    }
+
+    return number_format($angka, 2, ',', '.');
+}
+
+function format_stok($jumlah, string $satuan): string
+{
+    $jumlah = (float)$jumlah;
+
+    if ($satuan === 'gram') {
+        if ($jumlah >= 1000) {
+            return angka_bersih($jumlah / 1000) . ' kg';
+        }
+
+        return angka_bersih($jumlah) . ' gram';
+    }
+
+    if ($satuan === 'ml') {
+        if ($jumlah >= 1000) {
+            return angka_bersih($jumlah / 1000) . ' liter';
+        }
+
+        return angka_bersih($jumlah) . ' ml';
+    }
+
+    if ($satuan === 'pcs') {
+        return angka_bersih($jumlah) . ' pcs';
+    }
+
+    return angka_bersih($jumlah) . ' ' . $satuan;
 }

@@ -4,7 +4,12 @@ require_once 'config.php';
 $username = trim($_POST['username'] ?? '');
 $password = $_POST['password'] ?? '';
 
-$stmt = $conn->prepare('SELECT id, username, password, nama_lengkap, role FROM users WHERE username = ? LIMIT 1');
+$stmt = $conn->prepare(
+    'SELECT id, username, password, nama_lengkap, role 
+     FROM users 
+     WHERE username = ? 
+     LIMIT 1'
+);
 $stmt->bind_param('s', $username);
 $stmt->execute();
 
@@ -23,5 +28,20 @@ $_SESSION['user'] = [
     'role' => $user['role']
 ];
 
-header('Location: ' . ($user['role'] === 'kasir' ? 'kasir.php' : 'admin.php'));
+if ($user['role'] === 'kasir') {
+    header('Location: kasir.php');
+    exit;
+}
+
+if ($user['role'] === 'manager') {
+    header('Location: manager.php');
+    exit;
+}
+
+if ($user['role'] === 'finance') {
+    header('Location: finance.php');
+    exit;
+}
+
+header('Location: index.php?error=Role tidak dikenali');
 exit;

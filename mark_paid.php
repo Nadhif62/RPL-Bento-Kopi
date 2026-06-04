@@ -22,7 +22,12 @@ if ($orderId <= 0) {
 $conn->begin_transaction();
 
 try {
-    $stmt = $conn->prepare('SELECT id, total_bayar, status FROM orders WHERE id = ? AND user_id = ? FOR UPDATE');
+    $stmt = $conn->prepare(
+        'SELECT id, total_bayar, status 
+         FROM orders 
+         WHERE id = ? AND user_id = ? 
+         FOR UPDATE'
+    );
     $stmt->bind_param('ii', $orderId, $userId);
     $stmt->execute();
 
@@ -60,7 +65,8 @@ try {
 
     $conn->commit();
 
-    $_SESSION['flash_success'] = 'Order #' . $orderId . ' berhasil ditandai lunas. Kembalian: ' . rupiah($kembalian);
+    $_SESSION['flash_success'] =
+        'Order #' . $orderId . ' berhasil ditandai lunas. Kembalian: ' . rupiah($kembalian);
 } catch (Throwable $e) {
     $conn->rollback();
     $_SESSION['flash_error'] = $e->getMessage();

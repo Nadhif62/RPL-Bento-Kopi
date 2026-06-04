@@ -11,7 +11,12 @@ if ($orderId <= 0 || $alasan === '') {
     exit;
 }
 
-$check = $conn->prepare('SELECT id, status FROM orders WHERE id = ? LIMIT 1');
+$check = $conn->prepare(
+    'SELECT id, status 
+     FROM orders 
+     WHERE id = ? 
+     LIMIT 1'
+);
 $check->bind_param('i', $orderId);
 $check->execute();
 
@@ -24,18 +29,39 @@ if (!$order) {
     exit;
 }
 
-if ($order['status'] === 'refunded') {
-    $_SESSION['flash_error'] = 'Order ini sudah pernah direfund.';
+if ($order['status'] !== 'paid') {
+    $_SESSION['flash_error'] = 'Refund hanya bisa diajukan untuk order yang sudah lunas.';
     header('Location: kasir.php');
     exit;
 }
 
-$stmt = $conn->prepare('INSERT INTO refunds (order_id, alasan, status) VALUES (?, ?, "pending")');
+$dup = $conn->prepare(
+    'SELECT id 
+     FROM refunds 
+     WHERE order_id = ? AND status = "pending" 
+     LIMIT 1'
+);
+$dup->bind_param('i', $orderId);
+$dup->execute();
+
+$existing = $dup->get_result()->fetch_assoc();
+$dup->close();
+
+if ($existing) {
+    $_SESSION['flash_error'] = 'Order ini sudah memiliki pengajuan refund pending.';
+    header('Location: kasir.php');
+    exit;
+}
+
+$stmt = $conn->prepare(
+    'INSERT INTO refunds (order_id, alasan, status) 
+     VALUES (?, ?, "pending")'
+);
 $stmt->bind_param('is', $orderId, $alasan);
 $stmt->execute();
 $stmt->close();
 
-$_SESSION['flash_success'] = 'Pengajuan refund berhasil dikirim.';
+$_SESSION['flash_success'] = 'Pengajuan refund berhasil dikirim ke finance.';
 
 header('Location: kasir.php');
 exit;

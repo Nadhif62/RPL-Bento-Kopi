@@ -10,7 +10,7 @@ function save_order(mysqli $conn, array $payload): array
     $metodePembayaran = $payload['metode_pembayaran'] ?? 'tunai';
     $nominalDiterima = isset($payload['nominal_diterima']) && $payload['nominal_diterima'] !== ''
         ? (float)$payload['nominal_diterima']
-        : null;
+        : 0;
     $status = $payload['status'] ?? 'paid';
     $items = $payload['items'] ?? [];
 
@@ -48,14 +48,19 @@ function save_order(mysqli $conn, array $payload): array
     $conn->begin_transaction();
 
     try {
-        $total = 0;
+        $totalTambahan = 0;
         $menuData = [];
 
-        $menuStmt = $conn->prepare('SELECT id, nama_menu, harga FROM menu WHERE id = ?');
+        $menuStmt = $conn->prepare(
+            'SELECT id, nama_menu, harga 
+             FROM menu 
+             WHERE id = ?'
+        );
 
         foreach ($cleanItems as $menuId => $qty) {
             $menuStmt->bind_param('i', $menuId);
             $menuStmt->execute();
+
             $menu = $menuStmt->get_result()->fetch_assoc();
 
             if (!$menu) {
@@ -63,34 +68,41 @@ function save_order(mysqli $conn, array $payload): array
             }
 
             $menuData[$menuId] = $menu;
-            $total += ((float)$menu['harga'] * $qty);
+            $totalTambahan += ((float)$menu['harga'] * $qty);
         }
 
         $menuStmt->close();
 
-        if ($status === 'paid' && $metodePembayaran === 'tunai') {
-            if ($nominalDiterima === null || $nominalDiterima < $total) {
-                throw new Exception('Nominal tunai tidak boleh kurang dari total bayar.');
-            }
-        }
-
         if ($metodePembayaran === 'qris') {
-            $nominalDiterima = $total;
+            $nominalDiterima = $status === 'paid' ? $totalTambahan : 0;
         }
 
-        $kembalian = $metodePembayaran === 'tunai' ? max(0, (float)$nominalDiterima - $total) : 0;
+        if ($status === 'paid' && $metodePembayaran === 'tunai' && $nominalDiterima < $totalTambahan) {
+            throw new Exception('Nominal tunai tidak boleh kurang dari total bayar.');
+        }
+
+        $kembalian = $metodePembayaran === 'tunai'
+            ? max(0, $nominalDiterima - $totalTambahan)
+            : 0;
+
         $required = [];
 
-        $recipeStmt = $conn->prepare('SELECT ingredient_id, jumlah_dibutuhkan FROM recipe_mapping WHERE menu_id = ?');
+        $recipeStmt = $conn->prepare(
+            'SELECT ingredient_id, jumlah_dibutuhkan 
+             FROM recipe_mapping 
+             WHERE menu_id = ?'
+        );
 
         foreach ($cleanItems as $menuId => $qty) {
             $recipeStmt->bind_param('i', $menuId);
             $recipeStmt->execute();
+
             $recipes = $recipeStmt->get_result();
 
             while ($row = $recipes->fetch_assoc()) {
                 $ingredientId = (int)$row['ingredient_id'];
                 $needed = (float)$row['jumlah_dibutuhkan'] * $qty;
+
                 $required[$ingredientId] = ($required[$ingredientId] ?? 0) + $needed;
             }
         }
@@ -101,11 +113,17 @@ function save_order(mysqli $conn, array $payload): array
             throw new Exception('Mapping resep belum tersedia untuk menu yang dipilih.');
         }
 
-        $stockStmt = $conn->prepare('SELECT id, nama_bahan, stok_gudang, batas_kritis FROM ingredients WHERE id = ? FOR UPDATE');
+        $stockStmt = $conn->prepare(
+            'SELECT id, nama_bahan, satuan, stok_gudang, batas_kritis 
+             FROM ingredients 
+             WHERE id = ? 
+             FOR UPDATE'
+        );
 
         foreach ($required as $ingredientId => $needed) {
             $stockStmt->bind_param('i', $ingredientId);
             $stockStmt->execute();
+
             $ingredient = $stockStmt->get_result()->fetch_assoc();
 
             if (!$ingredient) {
@@ -113,54 +131,132 @@ function save_order(mysqli $conn, array $payload): array
             }
 
             if ((float)$ingredient['stok_gudang'] < $needed) {
-                throw new Exception('Stok ' . $ingredient['nama_bahan'] . ' tidak cukup. Sisa: ' . $ingredient['stok_gudang']);
+                throw new Exception(
+                    'Stok ' . $ingredient['nama_bahan'] .
+                    ' tidak cukup. Sisa: ' .
+                    format_stok($ingredient['stok_gudang'], $ingredient['satuan'])
+                );
             }
         }
 
         $stockStmt->close();
 
-        $orderStmt = $conn->prepare(
-            'INSERT INTO orders
-             (user_id, shift_id, nomor_meja, order_type, customer_name, total_bayar, metode_pembayaran, nominal_diterima, kembalian, status, tanggal)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())'
-        );
+        $isAppendOpenBill = false;
+        $orderId = 0;
 
-        $orderStmt->bind_param(
-            'iisssdsdds',
-            $userId,
-            $shiftId,
-            $nomorMeja,
-            $orderType,
-            $customerName,
-            $total,
-            $metodePembayaran,
-            $nominalDiterima,
-            $kembalian,
-            $status
-        );
+        if ($status === 'open') {
+            $openStmt = $conn->prepare(
+                'SELECT id, total_bayar 
+                 FROM orders 
+                 WHERE nomor_meja = ? 
+                   AND order_type = ? 
+                   AND status = "open"
+                 ORDER BY id DESC
+                 LIMIT 1
+                 FOR UPDATE'
+            );
+            $openStmt->bind_param('ss', $nomorMeja, $orderType);
+            $openStmt->execute();
 
-        $orderStmt->execute();
-        $orderId = $conn->insert_id;
-        $orderStmt->close();
+            $openOrder = $openStmt->get_result()->fetch_assoc();
+            $openStmt->close();
 
-        $detailStmt = $conn->prepare(
-            'INSERT INTO order_details (order_id, menu_id, jumlah, harga_satuan, subtotal)
-             VALUES (?, ?, ?, ?, ?)'
-        );
+            if ($openOrder) {
+                $isAppendOpenBill = true;
+                $orderId = (int)$openOrder['id'];
+
+                $updateOrder = $conn->prepare(
+                    'UPDATE orders
+                     SET total_bayar = total_bayar + ?,
+                         customer_name = CASE 
+                            WHEN ? != "" THEN ?
+                            ELSE customer_name
+                         END
+                     WHERE id = ?'
+                );
+                $updateOrder->bind_param('dssi', $totalTambahan, $customerName, $customerName, $orderId);
+                $updateOrder->execute();
+                $updateOrder->close();
+            }
+        }
+
+        if (!$isAppendOpenBill) {
+            $orderStmt = $conn->prepare(
+                'INSERT INTO orders
+                 (user_id, shift_id, nomor_meja, order_type, customer_name, total_bayar, metode_pembayaran, nominal_diterima, kembalian, status, tanggal)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())'
+            );
+
+            $orderStmt->bind_param(
+                'iisssdsdds',
+                $userId,
+                $shiftId,
+                $nomorMeja,
+                $orderType,
+                $customerName,
+                $totalTambahan,
+                $metodePembayaran,
+                $nominalDiterima,
+                $kembalian,
+                $status
+            );
+
+            $orderStmt->execute();
+            $orderId = $conn->insert_id;
+            $orderStmt->close();
+        }
 
         foreach ($cleanItems as $menuId => $qty) {
             $harga = (float)$menuData[$menuId]['harga'];
             $subtotal = $harga * $qty;
-            $detailStmt->bind_param('iiidd', $orderId, $menuId, $qty, $harga, $subtotal);
-            $detailStmt->execute();
-        }
 
-        $detailStmt->close();
+            $detailCheck = $conn->prepare(
+                'SELECT id 
+                 FROM order_details 
+                 WHERE order_id = ? AND menu_id = ?
+                 LIMIT 1'
+            );
+            $detailCheck->bind_param('ii', $orderId, $menuId);
+            $detailCheck->execute();
+
+            $existingDetail = $detailCheck->get_result()->fetch_assoc();
+            $detailCheck->close();
+
+            if ($existingDetail) {
+                $updateDetail = $conn->prepare(
+                    'UPDATE order_details
+                     SET jumlah = jumlah + ?,
+                         subtotal = subtotal + ?
+                     WHERE id = ?'
+                );
+                $detailId = (int)$existingDetail['id'];
+                $updateDetail->bind_param('idi', $qty, $subtotal, $detailId);
+                $updateDetail->execute();
+                $updateDetail->close();
+            } else {
+                $detailStmt = $conn->prepare(
+                    'INSERT INTO order_details (order_id, menu_id, jumlah, harga_satuan, subtotal)
+                     VALUES (?, ?, ?, ?, ?)'
+                );
+                $detailStmt->bind_param('iiidd', $orderId, $menuId, $qty, $harga, $subtotal);
+                $detailStmt->execute();
+                $detailStmt->close();
+            }
+        }
 
         $criticalAlerts = [];
 
-        $updateStmt = $conn->prepare('UPDATE ingredients SET stok_gudang = stok_gudang - ? WHERE id = ?');
-        $afterStmt = $conn->prepare('SELECT nama_bahan, stok_gudang, batas_kritis FROM ingredients WHERE id = ?');
+        $updateStmt = $conn->prepare(
+            'UPDATE ingredients 
+             SET stok_gudang = stok_gudang - ? 
+             WHERE id = ?'
+        );
+
+        $afterStmt = $conn->prepare(
+            'SELECT nama_bahan, satuan, stok_gudang, batas_kritis 
+             FROM ingredients 
+             WHERE id = ?'
+        );
 
         foreach ($required as $ingredientId => $needed) {
             $updateStmt->bind_param('di', $needed, $ingredientId);
@@ -168,10 +264,15 @@ function save_order(mysqli $conn, array $payload): array
 
             $afterStmt->bind_param('i', $ingredientId);
             $afterStmt->execute();
+
             $after = $afterStmt->get_result()->fetch_assoc();
 
             if ((float)$after['stok_gudang'] <= (float)$after['batas_kritis']) {
-                $criticalAlerts[] = $after['nama_bahan'] . ' tersisa ' . $after['stok_gudang'] . ' dan sudah masuk batas kritis.';
+                $criticalAlerts[] =
+                    $after['nama_bahan'] .
+                    ' tersisa ' .
+                    format_stok($after['stok_gudang'], $after['satuan']) .
+                    ' dan sudah masuk batas kritis.';
             }
         }
 
@@ -183,9 +284,10 @@ function save_order(mysqli $conn, array $payload): array
         return [
             'success' => true,
             'order_id' => $orderId,
-            'total' => $total,
+            'total' => $totalTambahan,
             'kembalian' => $kembalian,
-            'alerts' => $criticalAlerts
+            'alerts' => $criticalAlerts,
+            'is_append_open_bill' => $isAppendOpenBill
         ];
     } catch (Throwable $e) {
         $conn->rollback();

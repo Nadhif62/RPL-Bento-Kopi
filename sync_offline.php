@@ -14,6 +14,7 @@ if (!$shift) {
         'success' => false,
         'message' => 'Shift belum aktif.',
         'synced_count' => 0,
+        'success_items' => [],
         'failed_items' => []
     ]);
     exit;
@@ -21,6 +22,17 @@ if (!$shift) {
 
 $payload = json_decode(file_get_contents('php://input'), true);
 $orders = $payload['orders'] ?? [];
+
+if (!is_array($orders)) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Format order offline tidak valid.',
+        'synced_count' => 0,
+        'success_items' => [],
+        'failed_items' => []
+    ]);
+    exit;
+}
 
 $success = [];
 $failed = [];

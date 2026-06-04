@@ -1,12 +1,12 @@
 <?php
 require_once 'config.php';
-require_login(['admin', 'finance']);
+require_login(['finance']);
 
 $refundId = (int)($_POST['refund_id'] ?? 0);
-$adminId = (int)$_SESSION['user']['id'];
+$approverId = (int)$_SESSION['user']['id'];
 
 if ($refundId <= 0) {
-    header('Location: admin.php');
+    header('Location: finance.php');
     exit;
 }
 
@@ -17,7 +17,8 @@ try {
         'SELECT r.id, r.order_id, r.status, o.total_bayar, o.status AS order_status
          FROM refunds r
          JOIN orders o ON r.order_id = o.id
-         WHERE r.id = ? FOR UPDATE'
+         WHERE r.id = ? 
+         FOR UPDATE'
     );
     $stmt->bind_param('i', $refundId);
     $stmt->execute();
@@ -37,14 +38,21 @@ try {
 
     $upRefund = $conn->prepare(
         'UPDATE refunds
-         SET status = "approved", refund_amount = ?, approved_by = ?, approved_at = NOW()
+         SET status = "approved",
+             refund_amount = ?,
+             approved_by = ?,
+             approved_at = NOW()
          WHERE id = ?'
     );
-    $upRefund->bind_param('dii', $amount, $adminId, $refundId);
+    $upRefund->bind_param('dii', $amount, $approverId, $refundId);
     $upRefund->execute();
     $upRefund->close();
 
-    $upOrder = $conn->prepare('UPDATE orders SET status = "refunded" WHERE id = ?');
+    $upOrder = $conn->prepare(
+        'UPDATE orders 
+         SET status = "refunded" 
+         WHERE id = ?'
+    );
     $upOrder->bind_param('i', $refund['order_id']);
     $upOrder->execute();
     $upOrder->close();
@@ -52,11 +60,11 @@ try {
     $conn->commit();
 
     $_SESSION['flash_success'] =
-        'Refund disetujui. Total pendapatan otomatis dikurangi ' . rupiah($amount) . '.';
+        'Refund disetujui. Pendapatan otomatis dikurangi ' . rupiah($amount) . '.';
 } catch (Throwable $e) {
     $conn->rollback();
     $_SESSION['flash_error'] = $e->getMessage();
 }
 
-header('Location: admin.php');
+header('Location: finance.php');
 exit;
