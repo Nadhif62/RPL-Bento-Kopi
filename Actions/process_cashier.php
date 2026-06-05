@@ -4,7 +4,7 @@ require_login(['manager']);
 
 $username = trim($_POST['username'] ?? '');
 $nama = trim($_POST['nama_lengkap'] ?? '');
-$password = $_POST['password'] ?? '';
+$password = trim($_POST['password'] ?? '');
 
 if ($username === '' || $nama === '' || strlen($password) < 6) {
     $_SESSION['flash_error'] = 'Username, nama kasir, dan password minimal 6 karakter wajib diisi.';
@@ -12,7 +12,7 @@ if ($username === '' || $nama === '' || strlen($password) < 6) {
     exit;
 }
 
-$hash = password_hash($password, PASSWORD_DEFAULT);
+$plainPassword = $password;
 $role = 'kasir';
 
 try {
@@ -20,7 +20,7 @@ try {
         'INSERT INTO users (username, password, nama_lengkap, role)
          VALUES (?, ?, ?, ?)'
     );
-    $stmt->bind_param('ssss', $username, $hash, $nama, $role);
+    $stmt->bind_param('ssss', $username, $plainPassword, $nama, $role);
     $stmt->execute();
     $stmt->close();
 

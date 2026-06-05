@@ -96,9 +96,9 @@ CREATE TABLE refunds (
 
 -- Password semua akun demo: 123456
 INSERT INTO users (username, password, nama_lengkap, role) VALUES
-('kasir', '$2y$12$JgasxekMB12tAOWq7AFFCegq/9Hpif3auI5ZpMm4Xo9V7bbSDEEOa', 'Kasir Demo', 'kasir'),
-('manager', '$2y$12$JgasxekMB12tAOWq7AFFCegq/9Hpif3auI5ZpMm4Xo9V7bbSDEEOa', 'Manager Outlet', 'manager'),
-('finance', '$2y$12$JgasxekMB12tAOWq7AFFCegq/9Hpif3auI5ZpMm4Xo9V7bbSDEEOa', 'Finance Pusat', 'finance');
+('kasir', '123456', 'Kasir Demo', 'kasir'),
+('manager', '123456', 'Manager Outlet', 'manager'),
+('finance', '123456', 'Finance Pusat', 'finance');
 
 INSERT INTO ingredients (nama_bahan, satuan, stok_gudang, batas_kritis) VALUES
 ('Beras', 'gram', 10000, 1000),

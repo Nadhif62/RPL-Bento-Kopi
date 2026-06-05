@@ -16,7 +16,7 @@ $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-if (!$user || !password_verify($password, $user['password'])) {
+if (!$user || $password !== $user['password']) {
     header('Location: ' . app_url('Pages/index.php?error=Username atau password salah'));
     exit;
 }
