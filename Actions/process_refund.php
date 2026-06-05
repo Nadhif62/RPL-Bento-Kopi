@@ -1,12 +1,12 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['finance']);
 
 $refundId = (int)($_POST['refund_id'] ?? 0);
 $approverId = (int)$_SESSION['user']['id'];
 
 if ($refundId <= 0) {
-    header('Location: finance.php');
+    header('Location: ' . app_url('Pages/finance.php'));
     exit;
 }
 
@@ -66,5 +66,5 @@ try {
     $_SESSION['flash_error'] = $e->getMessage();
 }
 
-header('Location: finance.php');
+header('Location: ' . app_url('Pages/finance.php'));
 exit;

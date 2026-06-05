@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['kasir']);
 
 $userId = (int)$_SESSION['user']['id'];
@@ -15,7 +15,7 @@ if (!in_array($metode, ['tunai', 'qris'], true)) {
 
 if ($orderId <= 0) {
     $_SESSION['flash_error'] = 'Order tidak valid.';
-    header('Location: sales.php');
+    header('Location: ' . app_url('Pages/sales.php'));
     exit;
 }
 
@@ -72,5 +72,5 @@ try {
     $_SESSION['flash_error'] = $e->getMessage();
 }
 
-header('Location: sales.php');
+header('Location: ' . app_url('Pages/sales.php'));
 exit;

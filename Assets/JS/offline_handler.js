@@ -48,9 +48,12 @@ function setStatus() {
 }
 
 async function cacheAllOpenBills() {
-  const response = await fetch("get_all_open_bills.php?time=" + Date.now(), {
-    cache: "no-store",
-  });
+  const response = await fetch(
+    "../API/get_all_open_bills.php?time=" + Date.now(),
+    {
+      cache: "no-store",
+    },
+  );
 
   const text = await response.text();
 
@@ -60,7 +63,7 @@ async function cacheAllOpenBills() {
     data = JSON.parse(text);
   } catch (error) {
     throw new Error(
-      "Response get_all_open_bills.php bukan JSON. Cek apakah masih login sebagai kasir.",
+      "Response API/get_all_open_bills.php bukan JSON. Cek apakah masih login sebagai kasir.",
     );
   }
 
@@ -275,7 +278,7 @@ async function syncOfflineOrders() {
   }
 
   try {
-    const response = await fetch("sync_offline.php", {
+    const response = await fetch("../API/sync_offline.php", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

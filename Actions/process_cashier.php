@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['manager']);
 
 $username = trim($_POST['username'] ?? '');
@@ -8,7 +8,7 @@ $password = $_POST['password'] ?? '';
 
 if ($username === '' || $nama === '' || strlen($password) < 6) {
     $_SESSION['flash_error'] = 'Username, nama kasir, dan password minimal 6 karakter wajib diisi.';
-    header('Location: manager.php');
+    header('Location: ' . app_url('Pages/manager.php'));
     exit;
 }
 
@@ -29,5 +29,5 @@ try {
     $_SESSION['flash_error'] = 'Gagal menambah kasir. Username mungkin sudah dipakai.';
 }
 
-header('Location: manager.php');
+header('Location: ' . app_url('Pages/manager.php'));
 exit;

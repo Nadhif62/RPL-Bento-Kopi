@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 
 $username = trim($_POST['username'] ?? '');
 $password = $_POST['password'] ?? '';
@@ -17,7 +17,7 @@ $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$user || !password_verify($password, $user['password'])) {
-    header('Location: index.php?error=Username atau password salah');
+    header('Location: ' . app_url('Pages/index.php?error=Username atau password salah'));
     exit;
 }
 
@@ -29,19 +29,19 @@ $_SESSION['user'] = [
 ];
 
 if ($user['role'] === 'kasir') {
-    header('Location: kasir.php');
+    header('Location: ' . app_url('Pages/kasir.php'));
     exit;
 }
 
 if ($user['role'] === 'manager') {
-    header('Location: manager.php');
+    header('Location: ' . app_url('Pages/manager.php'));
     exit;
 }
 
 if ($user['role'] === 'finance') {
-    header('Location: finance.php');
+    header('Location: ' . app_url('Pages/finance.php'));
     exit;
 }
 
-header('Location: index.php?error=Role tidak dikenali');
+header('Location: ' . app_url('Pages/index.php?error=Role tidak dikenali'));
 exit;

@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['kasir']);
 
 $userId = (int)$_SESSION['user']['id'];
@@ -7,7 +7,7 @@ $shift = active_shift($conn, $userId);
 
 if (!$shift) {
     $_SESSION['flash_error'] = 'Tidak ada shift aktif.';
-    header('Location: kasir.php');
+    header('Location: ' . app_url('Pages/kasir.php'));
     exit;
 }
 
@@ -22,5 +22,5 @@ $stmt->close();
 
 $_SESSION['flash_success'] = 'Shift berhasil ditutup.';
 
-header('Location: kasir.php');
+header('Location: ' . app_url('Pages/kasir.php'));
 exit;

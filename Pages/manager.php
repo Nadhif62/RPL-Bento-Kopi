@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['manager']);
 
 $start = $_GET['start'] ?? date('Y-m-01');
@@ -144,7 +144,7 @@ $shifts = $shiftStmt->get_result();
 
     <div>
         <span class="me-3"><?= htmlspecialchars($_SESSION['user']['nama_lengkap']) ?></span>
-        <a href="logout.php" class="btn btn-outline-secondary btn-sm">Logout</a>
+        <a href="../Actions/logout.php" class="btn btn-outline-secondary btn-sm">Logout</a>
     </div>
 </nav>
 
@@ -216,7 +216,7 @@ $shifts = $shiftStmt->get_result();
             <div class="card p-3 mb-4">
                 <h5>Kelola Inventory Bahan Baku</h5>
 
-                <form action="process_inventory.php" method="post" class="row g-2 mb-3">
+                <form action="../Actions/process_inventory.php" method="post" class="row g-2 mb-3">
                     <input type="hidden" name="action" value="add">
 
                     <div class="col-md-3">
@@ -262,7 +262,7 @@ $shifts = $shiftStmt->get_result();
                         <tbody>
                         <?php while ($ing = $ingredients->fetch_assoc()): ?>
                             <tr>
-                                <form action="process_inventory.php" method="post">
+                                <form action="../Actions/process_inventory.php" method="post">
                                     <input type="hidden" name="action" value="update">
                                     <input type="hidden" name="id" value="<?= $ing['id'] ?>">
 
@@ -320,7 +320,7 @@ $shifts = $shiftStmt->get_result();
                                 </form>
 
                                 <td>
-                                    <form action="process_inventory.php" method="post" class="d-flex gap-2">
+                                    <form action="../Actions/process_inventory.php" method="post" class="d-flex gap-2">
                                         <input type="hidden" name="action" value="restock">
                                         <input type="hidden" name="id" value="<?= $ing['id'] ?>">
 
@@ -439,7 +439,7 @@ $shifts = $shiftStmt->get_result();
             <div class="card p-3 mb-4">
                 <h5>Tambah Kasir Outlet</h5>
 
-                <form action="process_cashier.php" method="post">
+                <form action="../Actions/process_cashier.php" method="post">
                     <div class="mb-2">
                         <label class="form-label">Nama Kasir</label>
                         <input type="text" name="nama_lengkap" class="form-control" required>

@@ -16,15 +16,47 @@ if ($conn->connect_error) {
 
 $conn->set_charset('utf8mb4');
 
+function app_base_path(): string
+{
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+    $scriptDir = trim($scriptDir, '/');
+
+    if ($scriptDir === '') {
+        return '/';
+    }
+
+    $parts = explode('/', $scriptDir);
+    $lastPart = end($parts);
+
+    if (in_array($lastPart, ['Pages', 'Actions', 'API', 'Includes'], true)) {
+        array_pop($parts);
+    }
+
+    if (empty($parts)) {
+        return '/';
+    }
+
+    return '/' . implode('/', $parts) . '/';
+}
+
+if (!defined('APP_BASE_URL')) {
+    define('APP_BASE_URL', app_base_path());
+}
+
+function app_url(string $path = ''): string
+{
+    return rtrim(APP_BASE_URL, '/') . '/' . ltrim($path, '/');
+}
+
 function require_login(array $roles = []): void
 {
     if (!isset($_SESSION['user'])) {
-        header('Location: index.php');
+        header('Location: ' . app_url('Pages/index.php'));
         exit;
     }
 
     if (!empty($roles) && !in_array($_SESSION['user']['role'], $roles, true)) {
-        header('Location: index.php?error=Akses ditolak');
+        header('Location: ' . app_url('Pages/index.php?error=Akses ditolak'));
         exit;
     }
 }

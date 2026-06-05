@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['kasir']);
 
 $userId = (int)$_SESSION['user']['id'];
@@ -46,7 +46,7 @@ $sales = $shift ? shift_sales($conn, (int)$shift['id']) : null;
         <div class="card p-4">
             <h4>Belum Ada Shift Aktif</h4>
 
-            <form action="start_shift.php" method="post" class="mt-3">
+            <form action="../Actions/start_shift.php" method="post" class="mt-3">
                 <label class="form-label">Petty Cash / Kas Awal</label>
                 <input type="number"
                        name="petty_cash"
@@ -101,7 +101,7 @@ $sales = $shift ? shift_sales($conn, (int)$shift['id']) : null;
                 </div>
             </div>
 
-            <form action="close_shift.php" method="post" onsubmit="return confirm('Tutup shift sekarang?')">
+            <form action="../Actions/close_shift.php" method="post" onsubmit="return confirm('Tutup shift sekarang?')">
                 <button class="btn btn-outline-danger w-100">Close Shift</button>
             </form>
         </div>

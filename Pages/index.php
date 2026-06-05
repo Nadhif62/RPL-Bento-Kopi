@@ -1,19 +1,19 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 
 if (isset($_SESSION['user'])) {
     if ($_SESSION['user']['role'] === 'kasir') {
-        header('Location: kasir.php');
+        header('Location: ' . app_url('Pages/kasir.php'));
         exit;
     }
 
     if ($_SESSION['user']['role'] === 'manager') {
-        header('Location: manager.php');
+        header('Location: ' . app_url('Pages/manager.php'));
         exit;
     }
 
     if ($_SESSION['user']['role'] === 'finance') {
-        header('Location: finance.php');
+        header('Location: ' . app_url('Pages/finance.php'));
         exit;
     }
 }
@@ -56,7 +56,7 @@ if (isset($_SESSION['user'])) {
                         </div>
                     <?php endif; ?>
 
-                    <form action="login_process.php" method="post">
+                    <form action="../Actions/login_process.php" method="post">
                         <div class="mb-3">
                             <label class="form-label">Username</label>
                             <input type="text"

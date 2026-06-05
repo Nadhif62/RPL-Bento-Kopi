@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['finance']);
 
 $start = $_GET['start'] ?? date('Y-m-01');
@@ -95,7 +95,7 @@ $refunds = $conn->query(
 
     <div>
         <span class="me-3"><?= htmlspecialchars($_SESSION['user']['nama_lengkap']) ?></span>
-        <a href="logout.php" class="btn btn-outline-secondary btn-sm">Logout</a>
+        <a href="../Actions/logout.php" class="btn btn-outline-secondary btn-sm">Logout</a>
     </div>
 </nav>
 
@@ -307,7 +307,7 @@ $refunds = $conn->query(
 
                                 <td>
                                     <?php if ($refund['status'] === 'pending'): ?>
-                                        <form action="process_refund.php"
+                                        <form action="../Actions/process_refund.php"
                                               method="post"
                                               onsubmit="return confirm('Setujui refund dari sisi finance?')">
                                             <input type="hidden" name="refund_id" value="<?= $refund['id'] ?>">

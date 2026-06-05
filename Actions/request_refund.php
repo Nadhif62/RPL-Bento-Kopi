@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['kasir']);
 
 $orderId = (int)($_POST['order_id'] ?? 0);
@@ -7,7 +7,7 @@ $alasan = trim($_POST['alasan'] ?? '');
 
 if ($orderId <= 0 || $alasan === '') {
     $_SESSION['flash_error'] = 'Order ID dan alasan refund wajib diisi.';
-    header('Location: kasir.php');
+    header('Location: ' . app_url('Pages/kasir.php'));
     exit;
 }
 
@@ -25,13 +25,13 @@ $check->close();
 
 if (!$order) {
     $_SESSION['flash_error'] = 'Order tidak ditemukan.';
-    header('Location: kasir.php');
+    header('Location: ' . app_url('Pages/kasir.php'));
     exit;
 }
 
 if ($order['status'] !== 'paid') {
     $_SESSION['flash_error'] = 'Refund hanya bisa diajukan untuk order yang sudah lunas.';
-    header('Location: kasir.php');
+    header('Location: ' . app_url('Pages/kasir.php'));
     exit;
 }
 
@@ -49,7 +49,7 @@ $dup->close();
 
 if ($existing) {
     $_SESSION['flash_error'] = 'Order ini sudah memiliki pengajuan refund pending.';
-    header('Location: kasir.php');
+    header('Location: ' . app_url('Pages/kasir.php'));
     exit;
 }
 
@@ -63,5 +63,5 @@ $stmt->close();
 
 $_SESSION['flash_success'] = 'Pengajuan refund berhasil dikirim ke finance.';
 
-header('Location: kasir.php');
+header('Location: ' . app_url('Pages/kasir.php'));
 exit;

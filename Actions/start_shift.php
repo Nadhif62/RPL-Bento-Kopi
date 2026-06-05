@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['kasir']);
 
 $userId = (int)$_SESSION['user']['id'];
@@ -7,7 +7,7 @@ $pettyCash = (float)($_POST['petty_cash'] ?? 0);
 
 if (active_shift($conn, $userId)) {
     $_SESSION['flash_error'] = 'Masih ada shift aktif.';
-    header('Location: kasir.php');
+    header('Location: ' . app_url('Pages/kasir.php'));
     exit;
 }
 
@@ -21,5 +21,5 @@ $stmt->close();
 
 $_SESSION['flash_success'] = 'Shift berhasil dimulai.';
 
-header('Location: kasir.php');
+header('Location: ' . app_url('Pages/kasir.php'));
 exit;

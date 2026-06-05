@@ -1,6 +1,6 @@
 <?php
-require_once 'config.php';
-require_once 'order_service.php';
+require_once __DIR__ . '/../Includes/config.php';
+require_once __DIR__ . '/../Includes/order_service.php';
 
 require_login(['kasir']);
 
@@ -9,7 +9,7 @@ $shift = active_shift($conn, $userId);
 
 if (!$shift) {
     $_SESSION['flash_error'] = 'Shift belum aktif. Start shift terlebih dahulu.';
-    header('Location: kasir.php');
+    header('Location: ' . app_url('Pages/kasir.php'));
     exit;
 }
 
@@ -46,5 +46,5 @@ try {
     $_SESSION['flash_error'] = $e->getMessage();
 }
 
-header('Location: kasir.php');
+header('Location: ' . app_url('Pages/kasir.php'));
 exit;

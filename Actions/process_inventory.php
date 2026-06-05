@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['manager']);
 
 $action = $_POST['action'] ?? '';
@@ -89,5 +89,5 @@ try {
     $_SESSION['flash_error'] = $e->getMessage();
 }
 
-header('Location: manager.php');
+header('Location: ' . app_url('Pages/manager.php'));
 exit;

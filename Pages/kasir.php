@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['kasir']);
 
 $userId = (int)$_SESSION['user']['id'];
@@ -125,7 +125,7 @@ while ($row = $result->fetch_assoc()) {
             <span class="badge bg-success me-2">Shift Aktif</span>
         <?php endif; ?>
 
-        <a href="logout.php" class="btn btn-outline-secondary btn-sm">Logout</a>
+        <a href="../Actions/logout.php" class="btn btn-outline-secondary btn-sm">Logout</a>
     </div>
 </nav>
 
@@ -160,7 +160,7 @@ while ($row = $result->fetch_assoc()) {
                     <h4>Start Shift</h4>
                     <p class="text-muted">Kasir wajib membuka shift sebelum membuat transaksi.</p>
 
-                    <form action="start_shift.php" method="post">
+                    <form action="../Actions/start_shift.php" method="post">
                         <div class="mb-3">
                             <label class="form-label">Petty Cash / Kas Awal</label>
                             <input type="number"
@@ -289,7 +289,7 @@ while ($row = $result->fetch_assoc()) {
                 <div class="card p-3">
                     <h5>Input Order / Tambah Pesanan</h5>
 
-                    <form action="process_order.php" method="post" id="orderForm">
+                    <form action="../Actions/process_order.php" method="post" id="orderForm">
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label">Tipe Order</label>
@@ -422,7 +422,7 @@ while ($row = $result->fetch_assoc()) {
                 <div class="card p-3">
                     <h5>Ajukan Refund</h5>
 
-                    <form action="request_refund.php" method="post">
+                    <form action="../Actions/request_refund.php" method="post">
                         <div class="mb-3">
                             <label class="form-label">Order ID</label>
                             <input type="number" name="order_id" class="form-control" required>
@@ -441,7 +441,7 @@ while ($row = $result->fetch_assoc()) {
     <?php endif; ?>
 </div>
 
-<script src="offline_handler.js"></script>
+<script src="../Assets/JS/offline_handler.js"></script>
 
 <script>
 const MODE_KEY_LOCAL = 'bento_offline_mode_v4';
@@ -584,7 +584,7 @@ async function loadOpenBillForTable(tableName, forceOffline = false) {
     }
 
     try {
-        const response = await fetch('get_open_bill.php?nomor_meja=' + encodeURIComponent(tableName));
+        const response = await fetch('../API/get_open_bill.php?nomor_meja=' + encodeURIComponent(tableName));
         const data = await response.json();
 
         if (!data.success) {

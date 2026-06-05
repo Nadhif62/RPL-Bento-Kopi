@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../Includes/config.php';
 require_login(['kasir']);
 
 $userId = (int)$_SESSION['user']['id'];
@@ -144,7 +144,7 @@ $net = (float)$summary['gross_sales'] - (float)$summary['refunded_sales'];
 
                         <td>
                             <?php if ($o['status'] === 'open'): ?>
-                                <form action="mark_paid.php" method="post" class="d-flex gap-2 flex-wrap">
+                                <form action="../Actions/mark_paid.php" method="post" class="d-flex gap-2 flex-wrap">
                                     <input type="hidden" name="order_id" value="<?= $o['id'] ?>">
 
                                     <select name="metode_pembayaran" class="form-select form-select-sm" style="width:95px">

@@ -1,6 +1,6 @@
 <?php
-require_once 'config.php';
-require_once 'order_service.php';
+require_once __DIR__ . '/../Includes/config.php';
+require_once __DIR__ . '/../Includes/order_service.php';
 
 require_login(['kasir']);
 
