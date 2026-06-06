@@ -4,6 +4,7 @@ USE bento_kopi;
 DROP TABLE IF EXISTS refunds;
 DROP TABLE IF EXISTS order_details;
 DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS dining_tables;
 DROP TABLE IF EXISTS shifts;
 DROP TABLE IF EXISTS recipe_mapping;
 DROP TABLE IF EXISTS menu;
@@ -53,6 +54,14 @@ CREATE TABLE shifts (
     CONSTRAINT fk_shift_user FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
+
+CREATE TABLE dining_tables (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    table_number VARCHAR(50) NOT NULL UNIQUE,
+    table_label VARCHAR(100) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB;
+
 CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -66,6 +75,7 @@ CREATE TABLE orders (
     kembalian DECIMAL(12,2) NULL,
     status ENUM('open','paid','refunded') NOT NULL DEFAULT 'paid',
     tanggal DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_open_bill_meja (order_type, status, nomor_meja),
     CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_order_shift FOREIGN KEY (shift_id) REFERENCES shifts(id)
 ) ENGINE=InnoDB;
@@ -99,6 +109,21 @@ INSERT INTO users (username, password, nama_lengkap, role) VALUES
 ('kasir', '123456', 'Kasir Demo', 'kasir'),
 ('manager', '123456', 'Manager Outlet', 'manager'),
 ('finance', '123456', 'Finance Pusat', 'finance');
+
+
+INSERT INTO dining_tables (table_number, table_label, is_active) VALUES
+('Meja 01', 'Meja 01', 1),
+('Meja 02', 'Meja 02', 1),
+('Meja 03', 'Meja 03', 1),
+('Meja 04', 'Meja 04', 1),
+('Meja 05', 'Meja 05', 1),
+('Meja 06', 'Meja 06', 1),
+('Meja 07', 'Meja 07', 1),
+('Meja 08', 'Meja 08', 1),
+('Meja 09', 'Meja 09', 1),
+('Meja 10', 'Meja 10', 1),
+('Meja 11', 'Meja 11', 1),
+('Meja 12', 'Meja 12', 1);
 
 INSERT INTO ingredients (nama_bahan, satuan, stok_gudang, batas_kritis) VALUES
 ('Beras', 'gram', 10000, 1000),

@@ -19,6 +19,7 @@ $stmt = $conn->prepare(
      FROM orders
      WHERE nomor_meja = ?
        AND status = "open"
+       AND order_type = "dine_in"
      ORDER BY id DESC
      LIMIT 1'
 );

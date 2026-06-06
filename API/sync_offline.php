@@ -46,7 +46,9 @@ foreach ($orders as $index => $order) {
 
         $success[] = [
             'local_index' => $index,
-            'order_id' => $result['order_id']
+            'order_id' => $result['order_id'],
+            'is_append_open_bill' => $result['is_append_open_bill'] ?? false,
+            'bill_total' => $result['bill_total'] ?? $result['total']
         ];
     } catch (Throwable $e) {
         $failed[] = [

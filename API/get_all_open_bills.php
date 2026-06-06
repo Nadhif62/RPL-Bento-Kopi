@@ -15,7 +15,7 @@ $stmt = $conn->prepare(
         status,
         tanggal
      FROM orders
-     WHERE status = "open"
+     WHERE status = "open" AND order_type = "dine_in"
      ORDER BY id DESC'
 );
 

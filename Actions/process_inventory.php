@@ -89,5 +89,9 @@ try {
     $_SESSION['flash_error'] = $e->getMessage();
 }
 
-header('Location: ' . app_url('Pages/manager.php'));
+$returnTo = $_POST['return_to'] ?? 'Pages/manager.php';
+if (strpos($returnTo, '://') !== false) {
+    $returnTo = 'Pages/manager.php';
+}
+header('Location: ' . app_url($returnTo));
 exit;

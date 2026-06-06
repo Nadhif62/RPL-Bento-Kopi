@@ -8,7 +8,11 @@ $password = trim($_POST['password'] ?? '');
 
 if ($username === '' || $nama === '' || strlen($password) < 6) {
     $_SESSION['flash_error'] = 'Username, nama kasir, dan password minimal 6 karakter wajib diisi.';
-    header('Location: ' . app_url('Pages/manager.php'));
+    $returnTo = $_POST['return_to'] ?? 'Pages/manager.php';
+    if (strpos($returnTo, '://') !== false) {
+        $returnTo = 'Pages/manager.php';
+    }
+    header('Location: ' . app_url($returnTo));
     exit;
 }
 
@@ -29,5 +33,9 @@ try {
     $_SESSION['flash_error'] = 'Gagal menambah kasir. Username mungkin sudah dipakai.';
 }
 
-header('Location: ' . app_url('Pages/manager.php'));
+$returnTo = $_POST['return_to'] ?? 'Pages/manager.php';
+if (strpos($returnTo, '://') !== false) {
+    $returnTo = 'Pages/manager.php';
+}
+header('Location: ' . app_url($returnTo));
 exit;

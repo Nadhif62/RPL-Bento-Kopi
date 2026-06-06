@@ -15,7 +15,11 @@ if (!in_array($metode, ['tunai', 'qris'], true)) {
 
 if ($orderId <= 0) {
     $_SESSION['flash_error'] = 'Order tidak valid.';
-    header('Location: ' . app_url('Pages/sales.php'));
+    $returnTo = $_POST['return_to'] ?? 'Pages/cek_order.php';
+    if (strpos($returnTo, '://') !== false) {
+        $returnTo = 'Pages/cek_order.php';
+    }
+    header('Location: ' . app_url($returnTo));
     exit;
 }
 
@@ -72,5 +76,9 @@ try {
     $_SESSION['flash_error'] = $e->getMessage();
 }
 
-header('Location: ' . app_url('Pages/sales.php'));
+$returnTo = $_POST['return_to'] ?? 'Pages/cek_order.php';
+if (strpos($returnTo, '://') !== false) {
+    $returnTo = 'Pages/cek_order.php';
+}
+header('Location: ' . app_url($returnTo));
 exit;
