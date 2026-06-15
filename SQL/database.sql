@@ -1,6 +1,7 @@
 CREATE DATABASE IF NOT EXISTS bento_kopi;
 USE bento_kopi;
 
+DROP TABLE IF EXISTS monthly_closings;
 DROP TABLE IF EXISTS refunds;
 DROP TABLE IF EXISTS order_details;
 DROP TABLE IF EXISTS orders;
@@ -108,11 +109,21 @@ CREATE TABLE refunds (
     CONSTRAINT fk_refund_approved_by FOREIGN KEY (approved_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE monthly_closings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    period_month CHAR(7) NOT NULL UNIQUE,
+    locked_by INT NOT NULL,
+    notes VARCHAR(255) NULL,
+    locked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_monthly_closing_user FOREIGN KEY (locked_by) REFERENCES users(id)
+) ENGINE=InnoDB;
+
 -- Catatan migrasi jika database lama sudah terpasang:
 -- ALTER TABLE refunds MODIFY status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending';
 -- ALTER TABLE refunds ADD COLUMN requested_by INT NULL AFTER refund_amount;
 -- ALTER TABLE refunds ADD CONSTRAINT fk_refund_requested_by FOREIGN KEY (requested_by) REFERENCES users(id);
 -- ALTER TABLE menu ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER harga;
+-- CREATE TABLE monthly_closings (id INT AUTO_INCREMENT PRIMARY KEY, period_month CHAR(7) NOT NULL UNIQUE, locked_by INT NOT NULL, notes VARCHAR(255) NULL, locked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT fk_monthly_closing_user FOREIGN KEY (locked_by) REFERENCES users(id)) ENGINE=InnoDB;
 
 -- Password semua akun demo: 123456
 INSERT INTO users (username, password, nama_lengkap, role) VALUES

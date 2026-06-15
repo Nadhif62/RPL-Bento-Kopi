@@ -870,3 +870,23 @@ h1, h2, h3, h4, h5, h6,
     font-size: clamp(30px, 11vw, 46px);
   }
 }
+
+
+/* Finance split pages: menjaga nominal besar tetap rapi dan tidak turun per angka */
+.finance-summary-row {
+  align-items: stretch;
+}
+
+.metric-value.money-nowrap,
+.manager-stat-value.money-nowrap {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+@media (max-width: 576px) {
+  .metric-value.money-nowrap,
+  .manager-stat-value.money-nowrap {
+    font-size: clamp(24px, 9vw, 38px);
+  }
+}

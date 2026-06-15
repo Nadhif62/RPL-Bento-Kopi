@@ -50,7 +50,7 @@ $products = $conn->query($productsSql);
     <header class="topbar">
         <a href="manager.php" class="btn btn-dark-outline btn-sm">← Manager</a>
         <div class="page-title">Manajemen Produk</div>
-        <span class="muted">Menu, harga, kategori, status</span>
+        <span class="muted">Kelola Menu</span>
     </header>
 
     <?php if (isset($_SESSION['flash_success'])): ?>
