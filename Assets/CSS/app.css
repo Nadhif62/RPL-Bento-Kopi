@@ -151,8 +151,15 @@ a { color: inherit; text-decoration: none; }
 }
 
 .btn-danger {
-  background: #9b2727;
-  border-color: #9b2727;
+  background: #b83232 !important;
+  border-color: #b83232 !important;
+  color: #fff !important;
+}
+
+.btn-danger:hover {
+  background: #9b2727 !important;
+  border-color: #9b2727 !important;
+  color: #fff !important;
 }
 
 .form-control,
@@ -795,5 +802,71 @@ h1, h2, h3, h4, h5, h6,
 
   .compact-order-value {
     font-size: 20px;
+  }
+}
+
+/* Sales / Close Shift */
+.metric-card-compact {
+  min-height: 92px;
+  padding: 16px 18px;
+}
+
+.metric-card-highlight {
+  border-color: rgba(215,169,68,.55);
+}
+
+.close-shift-action {
+  margin-top: 18px;
+}
+
+.close-shift-btn {
+  width: 100%;
+  min-height: 58px;
+  font-weight: 900;
+  font-size: 18px;
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  .close-shift-btn {
+    min-height: 54px;
+  }
+}
+
+
+/* Manager dashboard summary: dikunci pakai Bootstrap row/col agar stabil 2 x 2 */
+.manager-summary-row {
+  align-items: stretch;
+}
+
+.manager-stat-card {
+  min-height: 135px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.manager-stat-value {
+  font-size: clamp(36px, 4vw, 58px);
+  line-height: 1;
+}
+
+.money-nowrap {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  font-size: clamp(30px, 3.5vw, 52px);
+}
+
+@media (max-width: 768px) {
+  .manager-stat-card {
+    min-height: 112px;
+  }
+
+  .manager-stat-value,
+  .money-nowrap {
+    font-size: clamp(30px, 11vw, 46px);
   }
 }

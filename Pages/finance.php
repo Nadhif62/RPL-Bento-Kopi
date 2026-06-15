@@ -24,13 +24,29 @@ $summary = $summaryStmt->get_result()->fetch_assoc();
 $summaryStmt->close();
 $netSales = (float)$summary['gross_sales'] - (float)$summary['refund_total'];
 
-$refunds = $conn->query(
-    'SELECT r.*, o.total_bayar, o.nomor_meja, o.order_type, o.customer_name, o.metode_pembayaran, u.nama_lengkap AS kasir
-     FROM refunds r
-     JOIN orders o ON r.order_id = o.id
-     JOIN users u ON o.user_id = u.id
-     ORDER BY FIELD(r.status,"pending","approved"), r.created_at DESC'
-);
+$hasRequestedByColumn = table_column_exists($conn, 'refunds', 'requested_by');
+if ($hasRequestedByColumn) {
+    $refunds = $conn->query(
+        'SELECT r.*, o.total_bayar, o.nomor_meja, o.order_type, o.customer_name, o.metode_pembayaran,
+                cashier.nama_lengkap AS kasir,
+                manager.nama_lengkap AS manager_name
+         FROM refunds r
+         JOIN orders o ON r.order_id = o.id
+         JOIN users cashier ON o.user_id = cashier.id
+         LEFT JOIN users manager ON r.requested_by = manager.id
+         ORDER BY FIELD(r.status,"pending","approved","rejected"), r.created_at DESC'
+    );
+} else {
+    $refunds = $conn->query(
+        'SELECT r.*, o.total_bayar, o.nomor_meja, o.order_type, o.customer_name, o.metode_pembayaran,
+                u.nama_lengkap AS kasir,
+                NULL AS manager_name
+         FROM refunds r
+         JOIN orders o ON r.order_id = o.id
+         JOIN users u ON o.user_id = u.id
+         ORDER BY FIELD(r.status,"pending","approved","rejected"), r.created_at DESC'
+    );
+}
 
 $transactionsStmt = $conn->prepare(
     'SELECT o.*, u.nama_lengkap AS kasir
@@ -43,6 +59,17 @@ $transactionsStmt = $conn->prepare(
 $transactionsStmt->bind_param('ss', $startDateTime, $endDateTime);
 $transactionsStmt->execute();
 $transactions = $transactionsStmt->get_result();
+
+function finance_refund_badge(string $status): string
+{
+    if ($status === 'approved') {
+        return '<span class="badge badge-soft-success">Approved</span>';
+    }
+    if ($status === 'rejected') {
+        return '<span class="badge badge-soft-danger">Rejected</span>';
+    }
+    return '<span class="badge badge-soft-warning">Pending</span>';
+}
 ?>
 <!doctype html>
 <html lang="id">
@@ -86,27 +113,36 @@ $transactions = $transactionsStmt->get_result();
     </div>
 
     <section class="app-card mb-3">
-        <h5 class="mb-3">Pengajuan Refund</h5>
+        <h5 class="mb-3">Persetujuan Refund</h5>
         <div class="table-responsive">
             <table class="table align-middle">
-                <thead><tr><th>Order</th><th>Kasir</th><th>Total</th><th>Alasan</th><th>Status</th><th>Aksi</th></tr></thead>
+                <thead><tr><th>Order</th><th>Kasir</th><th>Manager</th><th>Total</th><th>Alasan</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody>
                 <?php if ($refunds->num_rows === 0): ?>
-                    <tr><td colspan="6" class="muted">Belum ada pengajuan refund.</td></tr>
+                    <tr><td colspan="7" class="muted">Belum ada pengajuan refund.</td></tr>
                 <?php endif; ?>
                 <?php while ($refund = $refunds->fetch_assoc()): ?>
                     <tr>
                         <td><strong>#<?= (int)$refund['order_id'] ?></strong><br><span class="muted"><?= htmlspecialchars($refund['order_type'] === 'takeaway' && $refund['customer_name'] ? $refund['customer_name'] : $refund['nomor_meja']) ?></span></td>
                         <td><?= htmlspecialchars($refund['kasir']) ?></td>
+                        <td><?= htmlspecialchars($refund['manager_name'] ?: '-') ?></td>
                         <td><?= rupiah($refund['total_bayar']) ?></td>
                         <td><?= htmlspecialchars($refund['alasan']) ?></td>
-                        <td><?= $refund['status'] === 'approved' ? '<span class="badge badge-soft-success">Approved</span>' : '<span class="badge badge-soft-warning">Pending</span>' ?></td>
+                        <td><?= finance_refund_badge($refund['status']) ?></td>
                         <td>
                             <?php if ($refund['status'] === 'pending'): ?>
-                                <form action="../Actions/process_refund.php" method="post" onsubmit="return confirm('Setujui refund ini?')">
-                                    <input type="hidden" name="refund_id" value="<?= (int)$refund['id'] ?>">
-                                    <button class="btn btn-success btn-sm">Approve</button>
-                                </form>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <form action="../Actions/process_refund.php" method="post" onsubmit="return confirm('Setujui refund ini?')">
+                                        <input type="hidden" name="refund_id" value="<?= (int)$refund['id'] ?>">
+                                        <input type="hidden" name="action" value="approve">
+                                        <button class="btn btn-success btn-sm">Approve</button>
+                                    </form>
+                                    <form action="../Actions/process_refund.php" method="post" onsubmit="return confirm('Tolak refund ini?')">
+                                        <input type="hidden" name="refund_id" value="<?= (int)$refund['id'] ?>">
+                                        <input type="hidden" name="action" value="reject">
+                                        <button class="btn btn-danger btn-sm">Reject</button>
+                                    </form>
+                                </div>
                             <?php else: ?>
                                 <span class="muted">—</span>
                             <?php endif; ?>

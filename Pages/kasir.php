@@ -10,14 +10,14 @@ $todayEnd = date('Y-m-d') . ' 23:59:59';
 
 $summaryStmt = $conn->prepare(
     'SELECT
-        COUNT(*) AS transaksi,
+        COALESCE(SUM(CASE WHEN tanggal BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) AS transaksi,
         COALESCE(SUM(CASE WHEN status = "open" THEN 1 ELSE 0 END), 0) AS pending,
-        COALESCE(SUM(CASE WHEN status IN ("paid","refunded") THEN total_bayar ELSE 0 END), 0) AS gross_sales,
-        COALESCE(SUM(CASE WHEN status = "refunded" THEN total_bayar ELSE 0 END), 0) AS refunded_sales
+        COALESCE(SUM(CASE WHEN tanggal BETWEEN ? AND ? AND status IN ("paid","refunded") THEN total_bayar ELSE 0 END), 0) AS gross_sales,
+        COALESCE(SUM(CASE WHEN tanggal BETWEEN ? AND ? AND status = "refunded" THEN total_bayar ELSE 0 END), 0) AS refunded_sales
      FROM orders
-     WHERE user_id = ? AND tanggal BETWEEN ? AND ?'
+     WHERE user_id = ?'
 );
-$summaryStmt->bind_param('iss', $userId, $todayStart, $todayEnd);
+$summaryStmt->bind_param('ssssssi', $todayStart, $todayEnd, $todayStart, $todayEnd, $todayStart, $todayEnd, $userId);
 $summaryStmt->execute();
 $summary = $summaryStmt->get_result()->fetch_assoc();
 $summaryStmt->close();
@@ -123,7 +123,7 @@ $salesToday = (float)$summary['gross_sales'] - (float)$summary['refunded_sales']
             <a class="nav-tile" href="sales.php">
                 <div class="nav-icon">▣</div>
                 <div class="nav-title">Sales Shift</div>
-                <div class="nav-desc">Rekap petty cash, cash, actual, dan QRIS</div>
+                <div class="nav-desc">Rekap petty cash, cash, expected cash, dan QRIS</div>
             </a>
         </section>
 

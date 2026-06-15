@@ -57,15 +57,40 @@ $refundCount = $conn->query(
         <div class="alert alert-danger"><?= htmlspecialchars($_SESSION['flash_error']); unset($_SESSION['flash_error']); ?></div>
     <?php endif; ?>
 
-    <div class="row g-3 mb-3">
-        <div class="col-md-3"><div class="metric-card"><div class="metric-label">Total Transaksi</div><div class="metric-value"><?= (int)$summary['total_transaksi'] ?></div></div></div>
-        <div class="col-md-3"><div class="metric-card"><div class="metric-label">Order Pending</div><div class="metric-value accent-yellow"><?= (int)$summary['pending'] ?></div></div></div>
-        <div class="col-md-3"><div class="metric-card"><div class="metric-label">Sales Lunas</div><div class="metric-value accent-green"><?= rupiah($summary['paid_sales']) ?></div></div></div>
-        <div class="col-md-3"><div class="metric-card"><div class="metric-label">Refund Pending</div><div class="metric-value accent-red"><?= (int)$refundCount ?></div></div></div>
-    </div>
+    <section class="row g-3 mb-3 manager-summary-row">
+        <div class="col-12 col-md-6">
+            <div class="metric-card manager-stat-card h-100">
+                <div class="metric-label">Total Transaksi</div>
+                <div class="metric-value manager-stat-value"><?= (int)$summary['total_transaksi'] ?></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="metric-card manager-stat-card h-100">
+                <div class="metric-label">Order Pending</div>
+                <div class="metric-value manager-stat-value accent-yellow"><?= (int)$summary['pending'] ?></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="metric-card manager-stat-card h-100">
+                <div class="metric-label">Sales Lunas</div>
+                <div class="metric-value manager-stat-value money-nowrap accent-green"><?= rupiah($summary['paid_sales']) ?></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="metric-card manager-stat-card h-100">
+                <div class="metric-label">Refund Pending</div>
+                <div class="metric-value manager-stat-value accent-red"><?= (int)$refundCount ?></div>
+            </div>
+        </div>
+    </section>
 
     <section class="manager-grid">
-        <a class="nav-tile primary" href="manage_stock.php">
+        <a class="nav-tile primary" href="manage_products.php">
+            <div class="nav-icon">☰</div>
+            <div class="nav-title">Manajemen Produk</div>
+            <div class="nav-desc">Kelola menu, kategori, harga, dan status</div>
+        </a>
+        <a class="nav-tile" href="manage_stock.php">
             <div class="nav-icon">▦</div>
             <div class="nav-title">Kelola Stock Bahan</div>
             <div class="nav-desc">Tambah, update, dan restock bahan</div>
@@ -92,8 +117,8 @@ $refundCount = $conn->query(
         </a>
         <a class="nav-tile" href="manager_refunds.php">
             <div class="nav-icon">↺</div>
-            <div class="nav-title">Daftar Pengajuan Refund</div>
-            <div class="nav-desc">Pantau refund pending dan approved</div>
+            <div class="nav-title">Komplain dan Refund</div>
+            <div class="nav-desc">Ajukan refund ke finance dan pantau statusnya</div>
         </a>
     </section>
 

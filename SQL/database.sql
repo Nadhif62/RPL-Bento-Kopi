@@ -32,7 +32,8 @@ CREATE TABLE menu (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nama_menu VARCHAR(100) NOT NULL,
     kategori ENUM('promo','beverage','makanan','snack') NOT NULL DEFAULT 'makanan',
-    harga DECIMAL(12,2) NOT NULL
+    harga DECIMAL(12,2) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB;
 
 CREATE TABLE recipe_mapping (
@@ -96,14 +97,22 @@ CREATE TABLE refunds (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
     alasan TEXT NOT NULL,
-    status ENUM('pending','approved') NOT NULL DEFAULT 'pending',
+    status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
     refund_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    requested_by INT NULL,
     approved_by INT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     approved_at DATETIME NULL,
     CONSTRAINT fk_refund_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    CONSTRAINT fk_refund_user FOREIGN KEY (approved_by) REFERENCES users(id)
+    CONSTRAINT fk_refund_requested_by FOREIGN KEY (requested_by) REFERENCES users(id),
+    CONSTRAINT fk_refund_approved_by FOREIGN KEY (approved_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
+
+-- Catatan migrasi jika database lama sudah terpasang:
+-- ALTER TABLE refunds MODIFY status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending';
+-- ALTER TABLE refunds ADD COLUMN requested_by INT NULL AFTER refund_amount;
+-- ALTER TABLE refunds ADD CONSTRAINT fk_refund_requested_by FOREIGN KEY (requested_by) REFERENCES users(id);
+-- ALTER TABLE menu ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER harga;
 
 -- Password semua akun demo: 123456
 INSERT INTO users (username, password, nama_lengkap, role) VALUES

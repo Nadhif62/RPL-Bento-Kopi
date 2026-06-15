@@ -12,15 +12,23 @@ if (!$shift) {
 }
 
 $sales = shift_sales($conn, (int)$shift['id']);
-$expectedCash = (float)$shift['petty_cash'] + (float)$sales['tunai'];
-$actualCashInput = $_POST['actual_cash'] ?? null;
-$actualCash = ($actualCashInput !== null && $actualCashInput !== '') ? (float)$actualCashInput : null;
+$actualCash = (float)$shift['petty_cash'] + (float)$sales['tunai'];
+$cashDifference = 0;
+
+$pendingStmt = $conn->prepare(
+    'SELECT COUNT(*) AS total_pending
+     FROM orders
+     WHERE shift_id = ? AND user_id = ? AND status = "open"'
+);
+$pendingStmt->bind_param('ii', $shift['id'], $userId);
+$pendingStmt->execute();
+$pendingCount = (int)($pendingStmt->get_result()->fetch_assoc()['total_pending'] ?? 0);
+$pendingStmt->close();
 
 $hasActualColumn = table_column_exists($conn, 'shifts', 'actual_cash');
 $hasDifferenceColumn = table_column_exists($conn, 'shifts', 'cash_difference');
 
-if ($actualCash !== null && $hasActualColumn && $hasDifferenceColumn) {
-    $cashDifference = $actualCash - $expectedCash;
+if ($hasActualColumn && $hasDifferenceColumn) {
     $stmt = $conn->prepare(
         'UPDATE shifts
          SET status = "closed", selesai_shift = NOW(), actual_cash = ?, cash_difference = ?
@@ -30,7 +38,7 @@ if ($actualCash !== null && $hasActualColumn && $hasDifferenceColumn) {
     $stmt->execute();
     $stmt->close();
 
-    $_SESSION['flash_success'] = 'Shift berhasil ditutup. Selisih kas: ' . rupiah($cashDifference) . '.';
+    $_SESSION['flash_success'] = 'Shift berhasil ditutup. Actual cash tersimpan ' . rupiah($actualCash) . '.';
 } else {
     $stmt = $conn->prepare(
         'UPDATE shifts
@@ -44,5 +52,10 @@ if ($actualCash !== null && $hasActualColumn && $hasDifferenceColumn) {
     $_SESSION['flash_success'] = 'Shift berhasil ditutup.';
 }
 
+if ($pendingCount > 0) {
+    $_SESSION['flash_success'] .= ' ' . $pendingCount . ' order pending akan otomatis dibawa ke shift berikutnya saat kasir start shift lagi.';
+}
+
+// Setelah close shift, kasir tetap login dan diarahkan ke dashboard kasir agar tampil form input petty cash.
 header('Location: ' . app_url('Pages/kasir.php'));
 exit;

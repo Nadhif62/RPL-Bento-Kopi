@@ -3,9 +3,10 @@ require_once __DIR__ . '/../Includes/config.php';
 require_login(['finance']);
 
 $refundId = (int)($_POST['refund_id'] ?? 0);
+$action = $_POST['action'] ?? 'approve';
 $approverId = (int)$_SESSION['user']['id'];
 
-if ($refundId <= 0) {
+if ($refundId <= 0 || !in_array($action, ['approve', 'reject'], true)) {
     header('Location: ' . app_url('Pages/finance.php'));
     exit;
 }
@@ -17,7 +18,7 @@ try {
         'SELECT r.id, r.order_id, r.status, o.total_bayar, o.status AS order_status
          FROM refunds r
          JOIN orders o ON r.order_id = o.id
-         WHERE r.id = ? 
+         WHERE r.id = ?
          FOR UPDATE'
     );
     $stmt->bind_param('i', $refundId);
@@ -30,8 +31,30 @@ try {
         throw new Exception('Refund tidak ditemukan.');
     }
 
-    if ($refund['status'] === 'approved' || $refund['order_status'] === 'refunded') {
+    if ($refund['status'] !== 'pending') {
         throw new Exception('Refund sudah diproses sebelumnya.');
+    }
+
+    if ($action === 'reject') {
+        $stmt = $conn->prepare(
+            'UPDATE refunds
+             SET status = "rejected",
+                 approved_by = ?,
+                 approved_at = NOW()
+             WHERE id = ?'
+        );
+        $stmt->bind_param('ii', $approverId, $refundId);
+        $stmt->execute();
+        $stmt->close();
+
+        $conn->commit();
+        $_SESSION['flash_success'] = 'Pengajuan refund ditolak.';
+        header('Location: ' . app_url('Pages/finance.php'));
+        exit;
+    }
+
+    if ($refund['order_status'] === 'refunded') {
+        throw new Exception('Order sudah direfund sebelumnya.');
     }
 
     $amount = (float)$refund['total_bayar'];
@@ -49,8 +72,8 @@ try {
     $upRefund->close();
 
     $upOrder = $conn->prepare(
-        'UPDATE orders 
-         SET status = "refunded" 
+        'UPDATE orders
+         SET status = "refunded"
          WHERE id = ?'
     );
     $upOrder->bind_param('i', $refund['order_id']);

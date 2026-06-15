@@ -13,15 +13,18 @@ if (!in_array($type, ['all', 'dine_in', 'takeaway'], true)) {
 if ($type === 'all') {
     $stmt = $conn->prepare(
         'SELECT * FROM orders
-         WHERE user_id = ? AND tanggal BETWEEN ? AND ?
-         ORDER BY tanggal DESC'
+         WHERE user_id = ?
+           AND ((tanggal BETWEEN ? AND ?) OR status = "open")
+         ORDER BY status = "open" DESC, tanggal DESC'
     );
     $stmt->bind_param('iss', $userId, $todayStart, $todayEnd);
 } else {
     $stmt = $conn->prepare(
         'SELECT * FROM orders
-         WHERE user_id = ? AND tanggal BETWEEN ? AND ? AND order_type = ?
-         ORDER BY tanggal DESC'
+         WHERE user_id = ?
+           AND ((tanggal BETWEEN ? AND ?) OR status = "open")
+           AND order_type = ?
+         ORDER BY status = "open" DESC, tanggal DESC'
     );
     $stmt->bind_param('isss', $userId, $todayStart, $todayEnd, $type);
 }
@@ -30,14 +33,14 @@ $orders = $stmt->get_result();
 
 $sumStmt = $conn->prepare(
     'SELECT
-        COALESCE(SUM(CASE WHEN status IN ("paid","refunded") THEN total_bayar ELSE 0 END),0) AS gross_sales,
-        COALESCE(SUM(CASE WHEN status = "refunded" THEN total_bayar ELSE 0 END),0) AS refunded_sales,
+        COALESCE(SUM(CASE WHEN tanggal BETWEEN ? AND ? AND status IN ("paid","refunded") THEN total_bayar ELSE 0 END),0) AS gross_sales,
+        COALESCE(SUM(CASE WHEN tanggal BETWEEN ? AND ? AND status = "refunded" THEN total_bayar ELSE 0 END),0) AS refunded_sales,
         COALESCE(SUM(CASE WHEN status = "open" THEN 1 ELSE 0 END),0) AS pending,
-        COALESCE(SUM(CASE WHEN status = "paid" THEN 1 ELSE 0 END),0) AS paid_count
+        COALESCE(SUM(CASE WHEN tanggal BETWEEN ? AND ? AND status = "paid" THEN 1 ELSE 0 END),0) AS paid_count
      FROM orders
-     WHERE user_id = ? AND tanggal BETWEEN ? AND ?'
+     WHERE user_id = ?'
 );
-$sumStmt->bind_param('iss', $userId, $todayStart, $todayEnd);
+$sumStmt->bind_param('ssssssi', $todayStart, $todayEnd, $todayStart, $todayEnd, $todayStart, $todayEnd, $userId);
 $sumStmt->execute();
 $summary = $sumStmt->get_result()->fetch_assoc();
 $sumStmt->close();

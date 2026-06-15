@@ -1,29 +1,29 @@
 <?php
 require_once __DIR__ . '/../Includes/config.php';
-require_login(['kasir']);
+require_login(['manager']);
 
-$returnTo = $_POST['return_to'] ?? 'Pages/ajukan_refund.php';
-if (strpos($returnTo, '://') !== false) {
-    $returnTo = 'Pages/ajukan_refund.php';
+$returnTo = $_POST['return_to'] ?? 'Pages/manager_refunds.php';
+if (strpos($returnTo, '://') !== false || strpos($returnTo, '/') === 0) {
+    $returnTo = 'Pages/manager_refunds.php';
 }
 
 $orderId = (int)($_POST['order_id'] ?? 0);
 $alasan = trim($_POST['alasan'] ?? '');
-$userId = (int)$_SESSION['user']['id'];
+$managerId = (int)$_SESSION['user']['id'];
 
 if ($orderId <= 0 || $alasan === '') {
-    $_SESSION['flash_error'] = 'Order ID dan alasan refund wajib diisi.';
+    $_SESSION['flash_error'] = 'Order dan alasan refund wajib diisi.';
     header('Location: ' . app_url($returnTo));
     exit;
 }
 
 $check = $conn->prepare(
-    'SELECT id, status
+    'SELECT id, status, total_bayar
      FROM orders
-     WHERE id = ? AND user_id = ?
+     WHERE id = ?
      LIMIT 1'
 );
-$check->bind_param('ii', $orderId, $userId);
+$check->bind_param('i', $orderId);
 $check->execute();
 $order = $check->get_result()->fetch_assoc();
 $check->close();
@@ -57,11 +57,23 @@ if ($existing) {
     exit;
 }
 
-$stmt = $conn->prepare(
-    'INSERT INTO refunds (order_id, alasan, status)
-     VALUES (?, ?, "pending")'
-);
-$stmt->bind_param('is', $orderId, $alasan);
+$hasRequestedByColumn = table_column_exists($conn, 'refunds', 'requested_by');
+$refundAmount = (float)$order['total_bayar'];
+
+if ($hasRequestedByColumn) {
+    $stmt = $conn->prepare(
+        'INSERT INTO refunds (order_id, alasan, status, refund_amount, requested_by)
+         VALUES (?, ?, "pending", ?, ?)'
+    );
+    $stmt->bind_param('isdi', $orderId, $alasan, $refundAmount, $managerId);
+} else {
+    $stmt = $conn->prepare(
+        'INSERT INTO refunds (order_id, alasan, status, refund_amount)
+         VALUES (?, ?, "pending", ?)'
+    );
+    $stmt->bind_param('isd', $orderId, $alasan, $refundAmount);
+}
+
 $stmt->execute();
 $stmt->close();
 
