@@ -158,25 +158,7 @@ Akun demo:
 
 ---
 
-## Tabel `orders`
 
-Tabel `orders` digunakan untuk menyimpan data transaksi.
-
-Status order:
-
-* open
-* paid
-* refunded
-
-Metode pembayaran:
-
-* tunai
-* qris
-
-Tipe order:
-
-* dine_in
-* takeaway
 
 ---
 
