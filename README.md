@@ -158,10 +158,6 @@ Akun demo:
 
 ---
 
-
-
----
-
 ---
 
 ## Cara Instalasi
