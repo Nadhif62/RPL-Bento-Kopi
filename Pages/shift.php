@@ -5,6 +5,7 @@ require_login(['kasir']);
 $userId = (int)$_SESSION['user']['id'];
 $shift = active_shift($conn, $userId);
 $sales = $shift ? shift_sales($conn, (int)$shift['id']) : null;
+$expectedCash = $shift && $sales ? (float)$shift['petty_cash'] + (float)$sales['tunai'] : 0;
 ?>
 <!doctype html>
 <html lang="id">
@@ -41,15 +42,37 @@ $sales = $shift ? shift_sales($conn, (int)$shift['id']) : null;
                 <div class="summary-row"><span class="muted">Mulai shift</span><strong><?= date('H.i', strtotime($shift['mulai_shift'])) ?></strong></div>
                 <div class="summary-row"><span class="muted">Petty cash</span><strong><?= rupiah($shift['petty_cash']) ?></strong></div>
                 <div class="summary-row"><span class="muted">Transaksi shift</span><strong><?= (int)$sales['transaksi'] ?></strong></div>
-                <div class="summary-row"><span class="muted">Tunai</span><strong><?= rupiah($sales['tunai']) ?></strong></div>
+                <div class="summary-row"><span class="muted">Cash</span><strong><?= rupiah($sales['tunai']) ?></strong></div>
                 <div class="summary-row"><span class="muted">QRIS</span><strong><?= rupiah($sales['qris']) ?></strong></div>
+                <div class="summary-row"><span class="muted">Actual sistem</span><strong><?= rupiah($expectedCash) ?></strong></div>
                 <div class="summary-total"><span>Total penjualan shift ini</span><span class="price"><?= rupiah($sales['net_sales']) ?></span></div>
             </div>
-            <form action="../Actions/close_shift.php" method="post" onsubmit="return confirm('Tutup shift sekarang?')">
-                <button class="btn btn-dark-outline w-100 py-3">Close Shift</button>
+            <form action="../Actions/close_shift.php" method="post" onsubmit="return confirm('Simpan actual cash dan tutup shift sekarang?')">
+                <input type="hidden" id="expectedCashValue" value="<?= (float)$expectedCash ?>">
+                <label class="form-label">Actual Cash / Uang Fisik Dihitung</label>
+                <input id="actualCashInput" type="number" name="actual_cash" class="form-control mb-2" min="0" required placeholder="Contoh: 625000">
+                <div class="summary-row border-0 my-3"><span class="muted">Selisih</span><strong id="cashDifferencePreview">Rp 0</strong></div>
+                <button class="btn btn-dark-outline w-100 py-3">Simpan & Close Shift</button>
             </form>
         </section>
     <?php endif; ?>
 </div>
+
+<script>
+(function () {
+    const input = document.getElementById('actualCashInput');
+    const expected = Number(document.getElementById('expectedCashValue')?.value || 0);
+    const preview = document.getElementById('cashDifferencePreview');
+    function formatRupiah(value) {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value || 0)).replace('IDR', 'Rp').trim();
+    }
+    function updateDifference() {
+        if (!input || !preview) return;
+        preview.textContent = formatRupiah(Number(input.value || 0) - expected);
+    }
+    input?.addEventListener('input', updateDifference);
+    updateDifference();
+})();
+</script>
 </body>
 </html>

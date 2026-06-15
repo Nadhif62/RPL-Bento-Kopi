@@ -272,7 +272,6 @@ label,
   color: var(--text);
 }
 
-
 .order-info-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -711,4 +710,90 @@ label,
 
 @media (max-width: 640px) {
   .table-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+h1, h2, h3, h4, h5, h6,
+.card-title,
+.section-title,
+.modal-title,
+.offcanvas-title {
+  font-weight: 900 !important;
+  letter-spacing: -0.2px;
+}
+
+.metric-label,
+.form-label,
+.table thead th {
+  font-weight: 800 !important;
+}
+
+.metric-card .metric-label {
+  font-size: 16px;
+}
+
+.metric-card .metric-value {
+  font-size: clamp(26px, 3.2vw, 42px);
+  font-weight: 900;
+}
+
+.compact-order-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 20px;
+}
+
+.compact-order-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compact-order-label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 1px;
+}
+
+.compact-order-value {
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+.item-qty {
+  width: 78px;
+  text-align: center;
+  font-weight: 900;
+  font-size: 18px;
+  padding: 6px 10px;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.item-qty::-webkit-outer-spin-button,
+.item-qty::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-control input {
+  width: 78px;
+  min-width: 78px;
+  text-align: center;
+}
+@media (max-width: 640px) {
+  .compact-order-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .compact-order-item.text-md-end {
+    text-align: left !important;
+  }
+
+  .compact-order-value {
+    font-size: 20px;
+  }
 }

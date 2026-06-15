@@ -110,8 +110,8 @@ $salesToday = (float)$summary['gross_sales'] - (float)$summary['refunded_sales']
 
             <a class="nav-tile" href="cek_order.php">
                 <div class="nav-icon">☷</div>
-                <div class="nav-title">Sales / Cek Order</div>
-                <div class="nav-desc">Lihat transaksi, pending, dan tandai lunas</div>
+                <div class="nav-title">Cek Order</div>
+                <div class="nav-desc">Lihat transaksi, open bill, dan tandai lunas</div>
             </a>
 
             <a class="nav-tile" href="status_stock.php">
@@ -120,15 +120,15 @@ $salesToday = (float)$summary['gross_sales'] - (float)$summary['refunded_sales']
                 <div class="nav-desc">Cek stok bahan dan batas kritis</div>
             </a>
 
-            <a class="nav-tile" href="ajukan_refund.php">
-                <div class="nav-icon">↺</div>
-                <div class="nav-title">Ajukan Refund</div>
-                <div class="nav-desc">Kirim pengajuan refund ke finance</div>
+            <a class="nav-tile" href="sales.php">
+                <div class="nav-icon">▣</div>
+                <div class="nav-title">Sales Shift</div>
+                <div class="nav-desc">Rekap petty cash, cash, actual, dan QRIS</div>
             </a>
         </section>
 
         <div class="wide-action">
-            <a href="shift.php" class="btn btn-dark-outline btn-lg py-3">Close Shift</a>
+            <a href="sales.php" class="btn btn-dark-outline btn-lg py-3">Sales / Close Shift</a>
         </div>
 
         <div class="offline-box">

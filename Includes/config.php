@@ -61,6 +61,21 @@ function require_login(array $roles = []): void
     }
 }
 
+
+
+function table_column_exists(mysqli $conn, string $table, string $column): bool
+{
+    if (!preg_match('/^[A-Za-z0-9_]+$/', $table) || !preg_match('/^[A-Za-z0-9_]+$/', $column)) {
+        return false;
+    }
+
+    $tableName = '`' . $conn->real_escape_string($table) . '`';
+    $columnName = $conn->real_escape_string($column);
+    $result = $conn->query("SHOW COLUMNS FROM {$tableName} LIKE '{$columnName}'");
+
+    return $result instanceof mysqli_result && $result->num_rows > 0;
+}
+
 function rupiah($angka): string
 {
     return 'Rp ' . number_format((float)$angka, 0, ',', '.');

@@ -23,11 +23,26 @@ $openOrderId = (int)($_POST['open_order_id'] ?? $_GET['open_order_id'] ?? 0);
 $menus = [];
 $menusResult = $conn->query(
     'SELECT * FROM menu
-     ORDER BY FIELD(kategori,"beverage","makanan","snack"), nama_menu ASC'
+     ORDER BY FIELD(kategori,"promo","beverage","makanan","snack"), nama_menu ASC'
 );
 while ($menu = $menusResult->fetch_assoc()) {
     $menus[] = $menu;
 }
+
+$categoryLabels = [
+    'promo' => 'Promo',
+    'beverage' => 'Minuman',
+    'makanan' => 'Makanan',
+    'snack' => 'Snack',
+];
+$availableCategories = [];
+foreach ($menus as $menuItem) {
+    $category = (string)$menuItem['kategori'];
+    if (isset($categoryLabels[$category]) && !in_array($category, $availableCategories, true)) {
+        $availableCategories[] = $category;
+    }
+}
+$defaultCategory = $availableCategories[0] ?? 'beverage';
 
 $openBills = [];
 $openStmt = $conn->prepare(
@@ -133,13 +148,13 @@ if ($orderType === 'dine_in' && $nomorMeja !== '') {
         <input type="hidden" id="customerNameInput" name="customer_name" value="<?= htmlspecialchars($customerName) ?>">
 
         <section class="app-card mb-3 compact-order-head">
-            <div>
-                <div class="muted">Pesanan</div>
-                <strong><?= htmlspecialchars($orderType === 'dine_in' ? 'Dine In - ' . $nomorMeja : 'Takeaway') ?></strong>
+            <div class="compact-order-item">
+                <div class="compact-order-label">Pesanan</div>
+                <strong class="compact-order-value"><?= htmlspecialchars($orderType === 'dine_in' ? 'Dine In - ' . $nomorMeja : 'Takeaway') ?></strong>
             </div>
-            <div>
-                <div class="muted">Pelanggan</div>
-                <strong><?= htmlspecialchars($customerName) ?></strong>
+            <div class="compact-order-item text-md-end">
+                <div class="compact-order-label">Pelanggan</div>
+                <strong class="compact-order-value"><?= htmlspecialchars($customerName) ?></strong>
             </div>
         </section>
 
@@ -163,17 +178,18 @@ if ($orderType === 'dine_in' && $nomorMeja !== '') {
         <section class="menu-layout">
             <div class="app-card">
                 <div class="category-tabs">
-                    <button type="button" class="category-tab active" data-category-filter="all">Semua</button>
-                    <button type="button" class="category-tab" data-category-filter="beverage">Beverage</button>
-                    <button type="button" class="category-tab" data-category-filter="makanan">Makanan</button>
-                    <button type="button" class="category-tab" data-category-filter="snack">Snack</button>
+                    <?php foreach ($availableCategories as $category): ?>
+                        <button type="button" class="category-tab <?= $category === $defaultCategory ? 'active' : '' ?>" data-category-filter="<?= htmlspecialchars($category) ?>">
+                            <?= htmlspecialchars($categoryLabels[$category]) ?>
+                        </button>
+                    <?php endforeach; ?>
                 </div>
 
                 <div class="menu-scroll">
                     <div class="menu-grid">
                     <?php foreach ($menus as $menu): ?>
                         <?php $inputId = 'qty_' . (int)$menu['id']; ?>
-                        <article class="menu-card" data-category="<?= htmlspecialchars($menu['kategori']) ?>">
+                        <article class="menu-card" data-category="<?= htmlspecialchars($menu['kategori']) ?>" style="<?= $menu['kategori'] === $defaultCategory ? '' : 'display:none;' ?>">
                             <div class="menu-name"><?= htmlspecialchars($menu['nama_menu']) ?></div>
                             <div class="menu-price"><?= rupiah($menu['harga']) ?></div>
                             <div class="qty-control">
