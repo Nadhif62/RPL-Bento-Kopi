@@ -14,6 +14,13 @@ if (!$shift) {
     exit;
 }
 
+$requestToken = trim((string)($_POST['request_token'] ?? ''));
+if (!consume_order_token($requestToken)) {
+    $_SESSION['flash_error'] = 'Transaksi sudah diproses atau token transaksi tidak valid. Silakan buat transaksi baru.';
+    header('Location: ' . app_url('Pages/kasir.php'));
+    exit;
+}
+
 $payload = [
     'user_id' => $userId,
     'shift_id' => (int)$shift['id'],
@@ -28,6 +35,7 @@ $payload = [
 ];
 
 try {
+    ensure_current_period_unlocked($conn);
     $result = save_order($conn, $payload);
 
     $finalStatus = $result['status'] ?? $payload['status'];

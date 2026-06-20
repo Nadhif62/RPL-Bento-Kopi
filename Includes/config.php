@@ -157,3 +157,107 @@ function format_stok($jumlah, string $satuan): string
 
     return angka_bersih($jumlah) . ' ' . $satuan;
 }
+function ensure_audit_logs_table(mysqli $conn): void
+{
+    $conn->query('CREATE TABLE IF NOT EXISTS audit_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        action VARCHAR(80) NOT NULL,
+        entity_type VARCHAR(80) NOT NULL,
+        entity_id INT NULL,
+        description TEXT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_audit_entity (entity_type, entity_id),
+        INDEX idx_audit_created (created_at)
+    ) ENGINE=InnoDB');
+}
+
+function audit_log(mysqli $conn, string $action, string $entityType, ?int $entityId = null, string $description = ''): void
+{
+    try {
+        ensure_audit_logs_table($conn);
+        $userId = isset($_SESSION['user']['id']) ? (int)$_SESSION['user']['id'] : null;
+        $stmt = $conn->prepare('INSERT INTO audit_logs (user_id, action, entity_type, entity_id, description) VALUES (?, ?, ?, ?, ?)');
+        $stmt->bind_param('issis', $userId, $action, $entityType, $entityId, $description);
+        $stmt->execute();
+        $stmt->close();
+    } catch (Throwable $e) {
+        // Audit tidak boleh menghentikan transaksi utama.
+    }
+}
+
+function is_period_locked(mysqli $conn, string $dateTime): bool
+{
+    if (!table_column_exists($conn, 'monthly_closings', 'period_month')) {
+        return false;
+    }
+    $period = date('Y-m', strtotime($dateTime));
+    $stmt = $conn->prepare('SELECT id FROM monthly_closings WHERE period_month = ? LIMIT 1');
+    $stmt->bind_param('s', $period);
+    $stmt->execute();
+    $locked = (bool)$stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $locked;
+}
+
+
+function parse_numeric_input($value, string $label, float $min = 0, bool $allowZero = true): float
+{
+    if ($value === null || trim((string)$value) === '') {
+        throw new Exception($label . ' wajib diisi.');
+    }
+
+    $normalized = str_replace(['.', ','], ['', '.'], trim((string)$value));
+
+    if (!is_numeric($normalized)) {
+        throw new Exception($label . ' harus berupa angka yang valid.');
+    }
+
+    $number = (float)$normalized;
+
+    if ($number < $min) {
+        throw new Exception($label . ' tidak boleh kurang dari ' . angka_bersih($min) . '.');
+    }
+
+    if (!$allowZero && $number <= 0) {
+        throw new Exception($label . ' harus lebih dari 0.');
+    }
+
+    return $number;
+}
+
+function ensure_current_period_unlocked(mysqli $conn): void
+{
+    if (is_period_locked($conn, date('Y-m-d H:i:s'))) {
+        throw new Exception('Periode pembukuan bulan ini sudah dikunci. Perubahan data tidak dapat dilakukan.');
+    }
+}
+
+function init_order_token(): string
+{
+    if (!isset($_SESSION['order_tokens']) || !is_array($_SESSION['order_tokens'])) {
+        $_SESSION['order_tokens'] = [];
+    }
+
+    if (count($_SESSION['order_tokens']) > 20) {
+        $_SESSION['order_tokens'] = array_slice($_SESSION['order_tokens'], -20, null, true);
+    }
+
+    $token = bin2hex(random_bytes(16));
+    $_SESSION['order_tokens'][$token] = time();
+    return $token;
+}
+
+function consume_order_token(string $token): bool
+{
+    if ($token === '' || !isset($_SESSION['order_tokens']) || !is_array($_SESSION['order_tokens'])) {
+        return false;
+    }
+
+    if (!array_key_exists($token, $_SESSION['order_tokens'])) {
+        return false;
+    }
+
+    unset($_SESSION['order_tokens'][$token]);
+    return true;
+}

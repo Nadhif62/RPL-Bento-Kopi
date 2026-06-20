@@ -23,6 +23,7 @@ $openOrderId = (int)($_POST['open_order_id'] ?? $_GET['open_order_id'] ?? 0);
 $menus = [];
 $menusResult = $conn->query(
     'SELECT * FROM menu
+     WHERE is_active = 1
      ORDER BY FIELD(kategori,"promo","beverage","makanan","snack"), nama_menu ASC'
 );
 while ($menu = $menusResult->fetch_assoc()) {
@@ -30,7 +31,7 @@ while ($menu = $menusResult->fetch_assoc()) {
 }
 
 $categoryLabels = [
-    'promo' => 'Promo',
+    'promo' => 'Promo Kombo',
     'beverage' => 'Minuman',
     'makanan' => 'Makanan',
     'snack' => 'Snack',

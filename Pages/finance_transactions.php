@@ -6,15 +6,26 @@ $start = $_GET['start'] ?? date('Y-m-01');
 $end = $_GET['end'] ?? date('Y-m-d');
 $startDateTime = $start . ' 00:00:00';
 $endDateTime = $end . ' 23:59:59';
+$method = $_GET['method'] ?? '';
+if (!in_array($method, ['', 'tunai', 'qris'], true)) {
+    $method = '';
+}
 
-$transactionsStmt = $conn->prepare(
-    'SELECT o.*, u.nama_lengkap AS kasir
+$sql = 'SELECT o.*, u.nama_lengkap AS kasir
      FROM orders o
      JOIN users u ON o.user_id = u.id
-     WHERE o.tanggal BETWEEN ? AND ?
-     ORDER BY o.tanggal DESC'
-);
-$transactionsStmt->bind_param('ss', $startDateTime, $endDateTime);
+     WHERE o.tanggal BETWEEN ? AND ?';
+if ($method !== '') {
+    $sql .= ' AND o.metode_pembayaran = ?';
+}
+$sql .= ' ORDER BY o.tanggal DESC';
+
+$transactionsStmt = $conn->prepare($sql);
+if ($method !== '') {
+    $transactionsStmt->bind_param('sss', $startDateTime, $endDateTime, $method);
+} else {
+    $transactionsStmt->bind_param('ss', $startDateTime, $endDateTime);
+}
 $transactionsStmt->execute();
 $transactions = $transactionsStmt->get_result();
 ?>
@@ -43,8 +54,9 @@ $transactions = $transactionsStmt->get_result();
     <section class="app-card mb-3">
         <form method="get" class="row g-3">
             <div class="col-md-5"><label class="form-label">Tanggal Mulai</label><input type="date" name="start" value="<?= htmlspecialchars($start) ?>" class="form-control"></div>
-            <div class="col-md-5"><label class="form-label">Tanggal Akhir</label><input type="date" name="end" value="<?= htmlspecialchars($end) ?>" class="form-control"></div>
-            <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100">Filter</button></div>
+            <div class="col-md-4"><label class="form-label">Tanggal Akhir</label><input type="date" name="end" value="<?= htmlspecialchars($end) ?>" class="form-control"></div>
+            <div class="col-md-2"><label class="form-label">Metode</label><select name="method" class="form-select"><option value="" <?= $method === '' ? 'selected' : '' ?>>Semua</option><option value="tunai" <?= $method === 'tunai' ? 'selected' : '' ?>>Tunai</option><option value="qris" <?= $method === 'qris' ? 'selected' : '' ?>>QRIS</option></select></div>
+            <div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary w-100">Filter</button></div>
         </form>
     </section>
 

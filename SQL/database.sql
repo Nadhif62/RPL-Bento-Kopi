@@ -257,3 +257,16 @@ INSERT INTO recipe_mapping (menu_id, ingredient_id, jumlah_dibutuhkan) VALUES
 (38, 26, 40), (38, 7, 50),
 (39, 25, 5),
 (40, 17, 60), (40, 7, 50);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    action VARCHAR(80) NOT NULL,
+    entity_type VARCHAR(80) NOT NULL,
+    entity_id INT NULL,
+    description TEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_audit_entity (entity_type, entity_id),
+    INDEX idx_audit_created (created_at)
+) ENGINE=InnoDB;
+

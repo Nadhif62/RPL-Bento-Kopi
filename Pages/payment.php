@@ -139,6 +139,7 @@ if (empty($details) && !$existingOrder) {
 }
 
 $grandTotal = $existingTotal + $additionalTotal;
+$requestToken = init_order_token();
 if ($forceOpenBecauseOfflineQueue) {
     // Antrean offline belum masuk database, jadi pembayaran lunas dinonaktifkan agar kasir tidak menagih total yang belum lengkap.
 }
@@ -170,6 +171,7 @@ if ($orderType === 'dine_in') {
         <input type="hidden" name="open_order_id" value="<?= (int)$openOrderId ?>">
         <input type="hidden" name="nomor_meja" value="<?= htmlspecialchars($nomorMeja) ?>">
         <input type="hidden" name="customer_name" value="<?= htmlspecialchars($customerName) ?>">
+        <input type="hidden" name="request_token" value="<?= htmlspecialchars($requestToken) ?>">
         <?php foreach ($details as $item): ?>
             <input type="hidden" name="items[<?= (int)$item['id'] ?>]" value="<?= (int)$item['qty'] ?>">
         <?php endforeach; ?>
@@ -271,6 +273,7 @@ if ($orderType === 'dine_in') {
                         </label>
                     </div>
                 </section>
+
 
                 <section id="cashInputBox" class="app-card mb-3">
                     <label class="form-label">Nominal Diterima</label>

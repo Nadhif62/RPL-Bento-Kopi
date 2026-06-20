@@ -15,7 +15,7 @@ $conn->begin_transaction();
 
 try {
     $stmt = $conn->prepare(
-        'SELECT r.id, r.order_id, r.status, o.total_bayar, o.status AS order_status
+        'SELECT r.id, r.order_id, r.status, o.total_bayar, o.status AS order_status, o.tanggal
          FROM refunds r
          JOIN orders o ON r.order_id = o.id
          WHERE r.id = ?
@@ -35,6 +35,10 @@ try {
         throw new Exception('Refund sudah diproses sebelumnya.');
     }
 
+    if (is_period_locked($conn, $refund['tanggal'])) {
+        throw new Exception('Periode transaksi ini sudah dikunci pembukuan.');
+    }
+
     if ($action === 'reject') {
         $stmt = $conn->prepare(
             'UPDATE refunds
@@ -46,6 +50,8 @@ try {
         $stmt->bind_param('ii', $approverId, $refundId);
         $stmt->execute();
         $stmt->close();
+
+        audit_log($conn, 'refund_reject', 'refunds', $refundId, 'Refund ditolak.');
 
         $conn->commit();
         $_SESSION['flash_success'] = 'Pengajuan refund ditolak.';
@@ -79,6 +85,8 @@ try {
     $upOrder->bind_param('i', $refund['order_id']);
     $upOrder->execute();
     $upOrder->close();
+
+    audit_log($conn, 'refund_approve', 'refunds', $refundId, 'Refund disetujui untuk order #' . $refund['order_id']);
 
     $conn->commit();
 

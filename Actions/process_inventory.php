@@ -5,11 +5,13 @@ require_login(['manager']);
 $action = $_POST['action'] ?? '';
 
 try {
+    ensure_current_period_unlocked($conn);
+
     if ($action === 'add') {
         $namaBahan = trim($_POST['nama_bahan'] ?? '');
         $satuan = $_POST['satuan'] ?? 'gram';
-        $stokGudang = (float)($_POST['stok_gudang'] ?? 0);
-        $batasKritis = (float)($_POST['batas_kritis'] ?? 0);
+        $stokGudang = parse_numeric_input($_POST['stok_gudang'] ?? '', 'Stok gudang', 0, true);
+        $batasKritis = parse_numeric_input($_POST['batas_kritis'] ?? '', 'Batas kritis', 0, true);
 
         if ($namaBahan === '') {
             throw new Exception('Nama bahan wajib diisi.');
@@ -36,8 +38,8 @@ try {
         $id = (int)($_POST['id'] ?? 0);
         $namaBahan = trim($_POST['nama_bahan'] ?? '');
         $satuan = $_POST['satuan'] ?? 'gram';
-        $stokGudang = (float)($_POST['stok_gudang'] ?? 0);
-        $batasKritis = (float)($_POST['batas_kritis'] ?? 0);
+        $stokGudang = parse_numeric_input($_POST['stok_gudang'] ?? '', 'Stok gudang', 0, true);
+        $batasKritis = parse_numeric_input($_POST['batas_kritis'] ?? '', 'Batas kritis', 0, true);
 
         if ($id <= 0 || $namaBahan === '') {
             throw new Exception('Data bahan tidak valid.');
@@ -66,7 +68,7 @@ try {
         $_SESSION['flash_success'] = 'Data stok berhasil diperbarui.';
     } elseif ($action === 'restock') {
         $id = (int)($_POST['id'] ?? 0);
-        $jumlahTambah = (float)($_POST['jumlah_tambah'] ?? 0);
+        $jumlahTambah = parse_numeric_input($_POST['jumlah_tambah'] ?? '', 'Jumlah restock', 0, false);
 
         if ($id <= 0 || $jumlahTambah <= 0) {
             throw new Exception('Jumlah restock tidak valid.');

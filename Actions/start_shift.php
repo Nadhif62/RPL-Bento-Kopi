@@ -3,7 +3,7 @@ require_once __DIR__ . '/../Includes/config.php';
 require_login(['kasir']);
 
 $userId = (int)$_SESSION['user']['id'];
-$pettyCash = (float)($_POST['petty_cash'] ?? 0);
+$pettyCash = 0;
 
 if (active_shift($conn, $userId)) {
     $_SESSION['flash_error'] = 'Masih ada shift aktif.';
@@ -14,6 +14,8 @@ if (active_shift($conn, $userId)) {
 $conn->begin_transaction();
 
 try {
+    ensure_current_period_unlocked($conn);
+    $pettyCash = parse_numeric_input($_POST['petty_cash'] ?? '', 'Kas awal', 0, true);
     $stmt = $conn->prepare(
         'INSERT INTO shifts (user_id, petty_cash, status, mulai_shift)
          VALUES (?, ?, "active", NOW())'

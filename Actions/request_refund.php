@@ -18,7 +18,7 @@ if ($orderId <= 0 || $alasan === '') {
 }
 
 $check = $conn->prepare(
-    'SELECT id, status, total_bayar
+    'SELECT id, status, total_bayar, tanggal
      FROM orders
      WHERE id = ?
      LIMIT 1'
@@ -30,6 +30,12 @@ $check->close();
 
 if (!$order) {
     $_SESSION['flash_error'] = 'Order tidak ditemukan.';
+    header('Location: ' . app_url($returnTo));
+    exit;
+}
+
+if (is_period_locked($conn, $order['tanggal'])) {
+    $_SESSION['flash_error'] = 'Periode transaksi ini sudah dikunci pembukuan.';
     header('Location: ' . app_url($returnTo));
     exit;
 }
@@ -75,7 +81,9 @@ if ($hasRequestedByColumn) {
 }
 
 $stmt->execute();
+$refundId = $conn->insert_id;
 $stmt->close();
+audit_log($conn, 'refund_request', 'refunds', $refundId, 'Pengajuan refund order #' . $orderId);
 
 $_SESSION['flash_success'] = 'Pengajuan refund berhasil dikirim ke finance.';
 

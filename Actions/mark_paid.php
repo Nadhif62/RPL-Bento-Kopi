@@ -5,9 +5,8 @@ require_login(['kasir']);
 $userId = (int)$_SESSION['user']['id'];
 $orderId = (int)($_POST['order_id'] ?? 0);
 $metode = $_POST['metode_pembayaran'] ?? 'tunai';
-$nominal = isset($_POST['nominal_diterima']) && $_POST['nominal_diterima'] !== ''
-    ? (float)$_POST['nominal_diterima']
-    : 0;
+$nominalRaw = $_POST['nominal_diterima'] ?? '';
+$nominal = 0;
 
 if (!in_array($metode, ['tunai', 'qris'], true)) {
     $metode = 'tunai';
@@ -27,7 +26,7 @@ $conn->begin_transaction();
 
 try {
     $stmt = $conn->prepare(
-        'SELECT id, total_bayar, status 
+        'SELECT id, total_bayar, status, tanggal 
          FROM orders 
          WHERE id = ? AND user_id = ? 
          FOR UPDATE'
@@ -46,17 +45,27 @@ try {
         throw new Exception('Order ini bukan pending.');
     }
 
+    if (is_period_locked($conn, $order['tanggal'])) {
+        throw new Exception('Periode transaksi ini sudah dikunci pembukuan.');
+    }
+
     $total = (float)$order['total_bayar'];
 
     if ($metode === 'qris') {
         $nominal = $total;
     }
 
-    if ($metode === 'tunai' && $nominal < $total) {
-        throw new Exception('Nominal tunai kurang dari total bayar.');
+    if ($metode === 'tunai') {
+        $nominal = parse_numeric_input($nominalRaw, 'Nominal tunai', 0, true);
+        if ($nominal < $total) {
+            throw new Exception('Nominal tunai kurang dari total bayar.');
+        }
     }
 
     $kembalian = $metode === 'tunai' ? max(0, $nominal - $total) : 0;
+
+    // Stok open bill sudah dikurangi saat order pending dibuat/ditambah.
+    // Pelunasan hanya mengubah status pembayaran agar stok tidak terpotong dua kali.
 
     $update = $conn->prepare(
         'UPDATE orders
@@ -66,6 +75,8 @@ try {
     $update->bind_param('sddii', $metode, $nominal, $kembalian, $orderId, $userId);
     $update->execute();
     $update->close();
+
+    audit_log($conn, 'order_mark_paid', 'orders', $orderId, 'Open bill dilunasi.');
 
     $conn->commit();
 

@@ -8,9 +8,8 @@ function save_order(mysqli $conn, array $payload): array
     $orderType = $payload['order_type'] ?? 'dine_in';
     $customerName = trim((string)($payload['customer_name'] ?? ''));
     $metodePembayaran = $payload['metode_pembayaran'] ?? 'tunai';
-    $nominalDiterima = isset($payload['nominal_diterima']) && $payload['nominal_diterima'] !== ''
-        ? (float)$payload['nominal_diterima']
-        : 0;
+    $nominalRaw = $payload['nominal_diterima'] ?? '';
+    $nominalDiterima = 0;
     $status = $payload['status'] ?? 'paid';
     $openOrderId = (int)($payload['open_order_id'] ?? 0);
     $items = $payload['items'] ?? [];
@@ -27,7 +26,8 @@ function save_order(mysqli $conn, array $payload): array
         $status = 'paid';
     }
 
-    // Open bill hanya berlaku untuk dine in. Takeaway selalu transaksi langsung/lunas.
+
+    // Open bill hanya berlaku untuk dine in. Takeaway secara default transaksi langsung/lunas.
     if ($orderType === 'takeaway') {
         $status = 'paid';
         $openOrderId = 0;
@@ -35,6 +35,7 @@ function save_order(mysqli $conn, array $payload): array
             $nomorMeja = $customerName !== '' ? $customerName : 'Takeaway';
         }
     }
+
 
     $cleanItems = [];
     foreach ($items as $menuId => $qty) {
@@ -71,9 +72,9 @@ function save_order(mysqli $conn, array $payload): array
 
         if (!empty($cleanItems)) {
             $menuStmt = $conn->prepare(
-                'SELECT id, nama_menu, harga 
+                'SELECT id, nama_menu, harga, is_active 
                  FROM menu 
-                 WHERE id = ?'
+                 WHERE id = ? AND is_active = 1'
             );
 
             foreach ($cleanItems as $menuId => $qty) {
@@ -206,8 +207,11 @@ function save_order(mysqli $conn, array $payload): array
                     $nominalDiterima = $billTotal;
                 }
 
-                if ($metodePembayaran === 'tunai' && $nominalDiterima < $billTotal) {
-                    throw new Exception('Nominal tunai tidak boleh kurang dari total tagihan open bill.');
+                if ($metodePembayaran === 'tunai') {
+                    $nominalDiterima = parse_numeric_input($nominalRaw, 'Nominal tunai', 0, true);
+                    if ($nominalDiterima < $billTotal) {
+                        throw new Exception('Nominal tunai tidak boleh kurang dari total tagihan open bill.');
+                    }
                 }
 
                 $kembalian = $metodePembayaran === 'tunai'
@@ -256,8 +260,11 @@ function save_order(mysqli $conn, array $payload): array
                 $nominalDiterima = $status === 'paid' ? $totalTambahan : 0;
             }
 
-            if ($status === 'paid' && $metodePembayaran === 'tunai' && $nominalDiterima < $totalTambahan) {
-                throw new Exception('Nominal tunai tidak boleh kurang dari total bayar.');
+            if ($status === 'paid' && $metodePembayaran === 'tunai') {
+                $nominalDiterima = parse_numeric_input($nominalRaw, 'Nominal tunai', 0, true);
+                if ($nominalDiterima < $totalTambahan) {
+                    throw new Exception('Nominal tunai tidak boleh kurang dari total bayar.');
+                }
             }
 
             $kembalian = $metodePembayaran === 'tunai'
@@ -329,6 +336,8 @@ function save_order(mysqli $conn, array $payload): array
 
         $criticalAlerts = [];
 
+        // Stok dikurangi saat item disimpan, baik langsung lunas maupun pending/open bill.
+        // Dengan cara ini, open bill merepresentasikan stok yang sudah terpakai/direservasi.
         if (!empty($required)) {
             $updateStmt = $conn->prepare(
                 'UPDATE ingredients 
@@ -363,6 +372,8 @@ function save_order(mysqli $conn, array $payload): array
             $updateStmt->close();
             $afterStmt->close();
         }
+
+        audit_log($conn, $status === 'paid' ? 'order_paid' : 'order_open', 'orders', $orderId, 'Order disimpan melalui POS.');
 
         $conn->commit();
 

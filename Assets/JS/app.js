@@ -531,10 +531,18 @@ function initPaymentPage() {
       paymentForm.querySelector("input[name='status']:checked")?.value ||
       "paid";
     const nominal = Number(nominalInput?.value || 0);
-
     if (status === "paid" && method === "tunai" && nominal < total) {
       event.preventDefault();
       alert("Nominal tunai tidak boleh kurang dari total pembayaran.");
+      return;
+    }
+
+    const submitButton = paymentForm.querySelector(
+      "button[type='submit'], button:not([type])",
+    );
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Memproses...";
     }
   });
 
@@ -556,13 +564,12 @@ function initPaymentPage() {
 
     const nominal = Number(nominalInput?.value || 0);
     const change = Math.max(0, nominal - total);
-
     if (changeBox) {
       if (status === "open") {
         changeBox.textContent =
           "Pembayaran disimpan sebagai pending/open bill.";
       } else if (method === "qris") {
-        changeBox.textContent = "QRIS otomatis dianggap sesuai total tagihan.";
+        changeBox.textContent = "QRIS diproses otomatis sesuai total tagihan.";
       } else {
         changeBox.textContent = `Kembalian: ${formatRupiah(change)}`;
       }

@@ -14,7 +14,7 @@ function ensure_menu_status_column_for_page(mysqli $conn): bool
 
 $hasStatusColumn = ensure_menu_status_column_for_page($conn);
 $categoryLabels = [
-    'promo' => 'Promo',
+    'promo' => 'Promo Kombo',
     'beverage' => 'Minuman',
     'makanan' => 'Makanan',
     'snack' => 'Snack',
@@ -99,7 +99,7 @@ $products = $conn->query($productsSql);
             </div>
             <div class="col-lg-2 col-md-6">
                 <label class="form-label">Harga</label>
-                <input type="number" name="harga" class="form-control" placeholder="22000" min="1" step="500" required>
+                <input type="number" name="harga" class="form-control" placeholder="22000" min="500" step="500" required>
             </div>
             <?php if ($hasStatusColumn): ?>
                 <div class="col-lg-2 col-md-6">
@@ -157,7 +157,7 @@ $products = $conn->query($productsSql);
                             </select>
                         </td>
                         <td>
-                            <input form="<?= $updateFormId ?>" type="number" name="harga" class="form-control form-control-sm" value="<?= (float)$product['harga'] ?>" min="1" step="500" required>
+                            <input form="<?= $updateFormId ?>" type="number" name="harga" class="form-control form-control-sm" value="<?= (float)$product['harga'] ?>" min="500" step="500" required>
                         </td>
                         <?php if ($hasStatusColumn): ?>
                             <td>
