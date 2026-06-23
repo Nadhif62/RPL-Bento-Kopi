@@ -48,15 +48,31 @@ function app_url(string $path = ''): string
     return rtrim(APP_BASE_URL, '/') . '/' . ltrim($path, '/');
 }
 
+function role_dashboard_url(string $role): string
+{
+    if ($role === 'kasir') {
+        return app_url('Pages/kasir.php');
+    }
+    if ($role === 'manager') {
+        return app_url('Pages/manager.php');
+    }
+    if ($role === 'finance') {
+        return app_url('Pages/finance.php');
+    }
+
+    return app_url('Pages/index.php');
+}
+
 function require_login(array $roles = []): void
 {
     if (!isset($_SESSION['user'])) {
-        header('Location: ' . app_url('Pages/index.php'));
+        header('Location: ' . app_url('Pages/index.php?error=' . urlencode('Silakan login terlebih dahulu.')));
         exit;
     }
 
     if (!empty($roles) && !in_array($_SESSION['user']['role'], $roles, true)) {
-        header('Location: ' . app_url('Pages/index.php?error=Akses ditolak'));
+        $_SESSION['flash_error'] = 'Akses ditolak. Akun Anda tidak memiliki hak akses ke halaman tersebut.';
+        header('Location: ' . role_dashboard_url((string) $_SESSION['user']['role']));
         exit;
     }
 }
